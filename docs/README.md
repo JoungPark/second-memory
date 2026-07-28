@@ -1,0 +1,17 @@
+# Product and Architecture Docs
+
+This folder contains product and architecture documents for the platform.
+
+## Documents
+
+1. [PO: Product Brief](product/product-brief.md)
+2. [PO: PRD V1](product/prd-v1-memory-capture-recall-summary.md)
+3. [PO: User Stories V1](product/user-stories-v1.md)
+4. [PO: Backlog and Release Cuts](product/backlog-and-release-cuts.md)
+5. [PO: Metrics and Evaluation](product/metrics-and-evaluation.md)
+6. [PO: Risks, Assumptions, Open Questions](product/risks-assumptions-open-questions.md)
+
+## How to Use
+
+1. Start with the PO set to define user value and scope: Product Brief, PRD, User Stories, and Backlog.
+2. Review Metrics and Risks to set quality targets and constraints.
