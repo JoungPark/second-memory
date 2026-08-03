@@ -26,6 +26,13 @@
 2. Core journeys (capture and recall) are required on both platforms.
 3. Minor UX differences are acceptable if they preserve the same outcome.
 
+## Service Architecture (V1)
+
+1. Memory Service owns durable memory storage and retrieval primitives.
+2. Ask Service owns ask/chat orchestration with temporary session context.
+3. Ask Service persists END summaries by calling Memory Service APIs.
+4. Full ask turn-by-turn transcripts are not persisted in V1.
+
 ## User Journeys
 
 1. Capture Journey
@@ -38,7 +45,7 @@
 
 3. Ask Session Wrap-up Journey
 - User taps END in ask mode.
-- System summarizes the ask session and stores summary_text plus references.
+- Ask Service summarizes the ask session, then Memory Service stores it as conversation_summary.
 
 4. History Journey
 - User views a mixed history of notes and conversation summaries.
@@ -65,10 +72,12 @@
 - System stores only summary-level output when ask mode ends.
 - Stored fields are summary_text and references.
 - System does not persist full ask-turn transcripts in V1.
+- Ask Service must call Memory Service for durable summary persistence.
 
 5. Conversation Summary Storage
 - Conversation summaries are tenant-scoped and user-scoped.
 - Notes and conversation summaries are shown at the same level in history.
+- Conversation summaries are stored in the same entry model using entry_type=conversation_summary.
 
 ## Out of Scope for V1
 
@@ -84,6 +93,7 @@
 
 3. Reliability
 - No cross-tenant memory leakage.
+- END summary persistence supports idempotent retries across Ask Service to Memory Service calls.
 
 4. Cost Control
 - Monitor token usage per recall and per END summary generation.

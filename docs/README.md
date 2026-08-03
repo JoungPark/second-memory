@@ -10,8 +10,10 @@ This folder contains product and architecture documents for the platform.
 4. [PO: Backlog and Release Cuts](product/backlog-and-release-cuts.md)
 5. [PO: Metrics and Evaluation](product/metrics-and-evaluation.md)
 6. [PO: Risks, Assumptions, Open Questions](product/risks-assumptions-open-questions.md)
+7. [Architecture: V1 System Architecture](architecture/v1-system-architecture.md)
 
 ## How to Use
 
 1. Start with the PO set to define user value and scope: Product Brief, PRD, User Stories, and Backlog.
 2. Review Metrics and Risks to set quality targets and constraints.
+3. Use V1 System Architecture to implement APIs, data model, worker pipeline, and observability.

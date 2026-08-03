@@ -36,6 +36,8 @@ Acceptance Criteria:
 4. During ask mode, the system does not persist full turn-by-turn transcripts.
 5. When user taps END, system stores only summary_text and references.
 6. The flow is available on both web and mobile clients.
+7. Ask/chat flow keeps conversation context temporarily and clears it on END or timeout.
+8. END summary persistence is retried safely without duplicate summary records.
 
 ## US-004 Privacy Boundary
 
