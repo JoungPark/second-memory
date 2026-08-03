@@ -3,11 +3,11 @@
 ## V1 Must
 
 1. Authentication and tenant context.
-2. Memory create API and UI.
-3. Timeline list and filters.
+2. Note/self-talk create API and UI.
+3. Mixed history list (notes + conversation summaries) with default recent 10.
 4. Embedding generation pipeline.
 5. Ask-AI recall endpoint.
-6. Summary generation endpoint.
+6. Ask mode END summary storage (summary_text + references only).
 7. Basic observability and AI cost tracking.
 
 ## V1 Should
@@ -25,10 +25,11 @@
 
 ## V1.1 Candidates
 
-1. Personalized summary style.
-2. Better query rewriting for recall.
-3. Export memories and summaries.
-4. Multimedia capture/retrieval (images, audio, video).
+1. Summary generation endpoint.
+2. Personalized summary style.
+3. Better query rewriting for recall.
+4. Export memories and summaries.
+5. Multimedia capture/retrieval (images, audio, video).
 
 ## Cut Rules
 

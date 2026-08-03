@@ -5,7 +5,7 @@
 1. Capture activity: memories per active user per week.
 2. Engagement continuity: users with entries in at least two different weeks.
 3. Recall usage: ask-AI requests per active user.
-4. Summary usage: summaries generated per active user.
+4. Ask session completion: percentage of ask sessions ended with saved summary.
 
 ## AI Quality Metrics
 
@@ -17,9 +17,9 @@
 ## System Metrics
 
 1. Recall latency p50 and p95.
-2. Summary latency p50 and p95.
-3. Error rate by endpoint.
-4. Token cost per recall and per summary.
+2. Error rate by endpoint.
+3. Token cost per recall.
+4. Token cost per END summary generation.
 
 ## Evaluation Cadence
 
@@ -31,5 +31,5 @@
 
 1. Grounded answer rate >= 90% on sampled set.
 2. Recall latency p95 < 4 seconds.
-3. Summary latency p95 < 8 seconds.
-4. Hallucination incident rate < 3% on sampled set.
+3. Hallucination incident rate < 3% on sampled set.
+4. END summary save success rate >= 99%.

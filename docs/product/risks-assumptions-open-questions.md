@@ -5,7 +5,7 @@
 1. AI may produce plausible but incorrect memory statements.
 2. Sensitive personal data requires strict protection and retention controls.
 3. Retrieval quality may degrade as data size grows.
-4. Inference cost may rise with frequent summary generation.
+4. Inference cost may rise from summary generation at ask-session END.
 
 ## Assumptions
 
@@ -17,8 +17,8 @@
 
 1. What confidence threshold should trigger clarification instead of direct answer?
 2. How much citation detail should be shown by default?
-3. Should sentiment trend summaries be V1 or V1.1?
-4. What data retention controls should users configure?
+3. Should sentiment trend summaries be V1.1 or later?
+4. Should users be able to manually edit or regenerate saved conversation summaries?
 
 ## Decision Log Template
 

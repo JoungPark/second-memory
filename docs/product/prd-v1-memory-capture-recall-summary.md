@@ -1,4 +1,4 @@
-# PRD V1: Memory Capture, Recall, and Summary
+# PRD V1: Memory Capture and Recall
 
 - Product: Second Memory
 - Date: 2026-07-28
@@ -6,9 +6,9 @@
 
 ## Objectives
 
-1. Reduce friction for capturing feelings, thoughts, events, and memos.
+1. Reduce friction for capturing note and self-talk entries.
 2. Provide trustworthy AI recall grounded in user memories.
-3. Generate concise summaries that help reflection and pattern recognition.
+3. Preserve continuity with compact conversation summaries instead of full ask-turn storage.
 
 ## Personas
 
@@ -23,40 +23,52 @@
 ## Supported Platforms
 
 1. V1 supports both web and mobile clients.
-2. Core journeys (capture, recall, summary) are required on both platforms.
+2. Core journeys (capture and recall) are required on both platforms.
 3. Minor UX differences are acceptable if they preserve the same outcome.
 
 ## User Journeys
 
 1. Capture Journey
-- User writes a memory with optional tags.
-- System stores memory and schedules embedding generation.
+- User opens default mode and writes a note or self-talk entry.
+- System stores the entry with timestamp and optional tags.
 
 2. Recall Journey
 - User asks a natural-language question.
-- System retrieves top-k relevant memories and returns grounded answer.
+- System retrieves top-k relevant entries and returns a grounded answer.
 
-3. Summary Journey
-- User requests summary for day/week/month/topic.
-- System returns concise summary with highlights and references when possible.
+3. Ask Session Wrap-up Journey
+- User taps END in ask mode.
+- System summarizes the ask session and stores summary_text plus references.
+
+4. History Journey
+- User views a mixed history of notes and conversation summaries.
+- System returns the most recent N items (default N=10).
 
 ## Functional Requirements
 
 1. Memory Capture
-- User can create a memory with required content and memory type.
+- User can create an entry with required content and type: note or self_talk.
 - System stores timestamp and optional tags.
 
 2. Timeline and Filtering
-- User can list memories by date range, memory type, and keyword.
+- User can list notes and conversation summaries in one time-ordered history.
+- Default history window returns recent 10 items.
+- User can filter by date range, entry type, and keyword.
 
 3. AI Recall
 - User asks memory question in natural language.
-- System retrieves relevant memories and generates grounded answer.
-- Response includes references (memory id or timestamp) when available.
+- System retrieves relevant notes and conversation summaries and generates grounded answer.
+- Response includes references (entry id or timestamp) when available.
+- System can use prior details from earlier captures and summaries to answer follow-up questions.
 
-4. AI Summary
-- User can request day/week/month/topic summary.
-- System returns summary and key highlights.
+4. Ask Session Summary
+- System stores only summary-level output when ask mode ends.
+- Stored fields are summary_text and references.
+- System does not persist full ask-turn transcripts in V1.
+
+5. Conversation Summary Storage
+- Conversation summaries are tenant-scoped and user-scoped.
+- Notes and conversation summaries are shown at the same level in history.
 
 ## Out of Scope for V1
 
@@ -69,13 +81,12 @@
 
 2. Latency
 - Recall endpoint target: p95 under 4 seconds.
-- Summary endpoint target: p95 under 8 seconds.
 
 3. Reliability
 - No cross-tenant memory leakage.
 
 4. Cost Control
-- Monitor token usage per request and per summary.
+- Monitor token usage per recall and per END summary generation.
 
 ## Dependencies
 
@@ -88,4 +99,5 @@
 
 1. All Must stories accepted.
 2. Retrieval quality baseline reached.
-3. Observability dashboards for latency, errors, and AI cost are available.
+3. Ask mode END reliably stores summary_text and references.
+4. Observability dashboards for latency, errors, and AI cost are available.

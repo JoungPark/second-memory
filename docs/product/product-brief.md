@@ -11,7 +11,7 @@ People forget meaningful feelings, thoughts, and events. Traditional notes store
 
 ## Vision
 
-Second Memory helps users capture inner and outer moments quickly, then uses AI to retrieve relevant memories and summarize patterns over time.
+Second Memory helps users capture inner and outer moments quickly, then uses AI to retrieve relevant memories.
 
 ## Target User
 
@@ -20,21 +20,21 @@ Second Memory helps users capture inner and outer moments quickly, then uses AI 
 ## Supported Platforms
 
 1. V1 supports both web and mobile clients.
-2. Core journeys (capture, recall, summary) must be available on both platforms.
+2. Core journeys (note/self-talk capture, ask AI, and history) must be available on both platforms.
 3. Platform-specific UX differences are allowed if they do not change core outcomes.
 
 ## Core Value Proposition
 
 1. Fast capture in the moment.
 2. Reliable retrieval through natural-language questions.
-3. Useful summaries by time window and topic.
+3. Compact continuity through conversation summaries saved at the end of ask sessions.
 
 ## V1 Scope
 
-1. Create memory entries with type: feeling, thought, event, memo.
-2. Browse and filter timeline.
-3. Ask AI to recall relevant memories.
-4. Generate day/week/month/topic summaries.
+1. Create entries with type: note and self_talk.
+2. Run ask mode sessions, then save summary_text when the user taps END.
+3. Show recent history as a single mixed list of notes and conversation summaries (default N=10).
+4. Ask AI to recall relevant information using notes and conversation summaries.
 
 ## Out of Scope for V1
 
@@ -44,4 +44,4 @@ Second Memory helps users capture inner and outer moments quickly, then uses AI 
 
 1. Users capture consistently.
 2. Recall answers are relevant and grounded.
-3. Summaries are useful and trustworthy.
+3. Users can continue context across sessions from saved conversation summaries.
