@@ -1,0 +1,11 @@
+{
+  "name": "@second-memory/web",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "echo \"TODO: scaffold Next.js app in apps/web\"",
+    "build": "echo \"TODO: build web app\"",
+    "lint": "echo \"TODO: lint web app\"",
+    "test": "echo \"TODO: test web app\""
+  }
+}

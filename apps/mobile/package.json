@@ -1,0 +1,11 @@
+{
+  "name": "@second-memory/mobile",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "echo \"TODO: scaffold Expo app in apps/mobile\"",
+    "build": "echo \"TODO: build mobile app\"",
+    "lint": "echo \"TODO: lint mobile app\"",
+    "test": "echo \"TODO: test mobile app\""
+  }
+}

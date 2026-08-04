@@ -1,0 +1,11 @@
+{
+  "name": "@second-memory/memory-service",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "echo \"TODO: scaffold NestJS memory-service\"",
+    "build": "echo \"TODO: build memory-service\"",
+    "lint": "echo \"TODO: lint memory-service\"",
+    "test": "echo \"TODO: test memory-service\""
+  }
+}

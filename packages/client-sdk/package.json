@@ -1,0 +1,19 @@
+{
+  "name": "@second-memory/client-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo \"TODO: lint client-sdk\"",
+    "test": "echo \"TODO: test client-sdk\""
+  },
+  "dependencies": {
+    "@second-memory/shared-types": "workspace:*"
+  }
+}
