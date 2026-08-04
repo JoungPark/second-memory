@@ -27,6 +27,11 @@ Out of scope for V1:
 5. Cost visibility: token and latency telemetry built in from day one.
 6. Store compact continuity data: persist note/self-talk and conversation summaries, not full ask transcripts.
 
+Implementation note:
+
+1. Concrete MVP technology choices are documented in v1-implementation-decisions.md.
+2. MVP repository layout and folder boundaries are documented in v1-monorepo-structure.md.
+
 ## 3. Logical Architecture
 
 ```mermaid
@@ -61,9 +66,11 @@ flowchart LR
 
 1. Web Client
 - Responsive browser UI for capture, timeline, and recall.
+- MVP framework choice: Next.js.
 
 2. Mobile Client
 - Native or cross-platform app with the same core flows and API contract.
+- MVP framework choice: Expo.
 
 3. API Gateway / BFF
 - Validates auth tokens, injects tenant/user context, handles rate limits.
@@ -74,6 +81,7 @@ flowchart LR
 - Exposes retrieval/search primitives for Ask Service grounding.
 - Writes memory rows and emits embedding jobs through outbox/queue.
 - Enforces tenant and user boundaries on every read/write, including inter-service calls.
+- MVP framework choice: NestJS.
 
 5. Ask Service
 - Owns chat orchestration with LLM and RAG composition.
@@ -84,6 +92,7 @@ flowchart LR
 6. Embedding Worker
 - Pulls pending jobs, computes embeddings, stores vectors.
 - Retries transient failures with exponential backoff and dead-letter queue.
+- MVP queue/runtime choice: Redis + BullMQ.
 
 7. PostgreSQL + pgvector
 - Source of truth for users, memories, tags, audit events, and vectors.
@@ -337,10 +346,11 @@ Design choices:
 ## 11. Deployment Topology (Starter)
 
 1. One cloud region for V1.
-2. Managed PostgreSQL with pgvector extension.
+2. PostgreSQL with pgvector extension runs in Docker for MVP.
 3. Stateless API services in containers.
-4. Managed queue + worker process.
+4. Redis + BullMQ queue/worker runs in Docker for MVP.
 5. Secrets in managed secret store.
+6. See v1-implementation-decisions.md for concrete stack and revisit triggers.
 
 ## 12. Rollout Plan
 
