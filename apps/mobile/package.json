@@ -1,11 +1,26 @@
 {
   "name": "@second-memory/mobile",
-  "private": true,
   "version": "0.1.0",
+  "main": "index.ts",
   "scripts": {
-    "dev": "echo \"TODO: scaffold Expo app in apps/mobile\"",
-    "build": "echo \"TODO: build mobile app\"",
-    "lint": "echo \"TODO: lint mobile app\"",
-    "test": "echo \"TODO: test mobile app\""
-  }
+    "dev": "expo start",
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "build": "expo export --platform all",
+    "lint": "echo \"TODO: add Expo lint setup\"",
+    "test": "echo \"TODO: add Expo test setup\""
+  },
+  "dependencies": {
+    "expo": "~54.0.35",
+    "expo-status-bar": "~3.0.9",
+    "react": "19.1.0",
+    "react-native": "0.81.5"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "typescript": "~5.9.2"
+  },
+  "private": true
 }
