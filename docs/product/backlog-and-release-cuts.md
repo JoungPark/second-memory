@@ -2,7 +2,7 @@
 
 ## V1 Must
 
-1. Authentication and tenant context.
+1. Firebase Authentication and tenant context propagation.
 2. Note/self-talk create API and UI.
 3. Mixed history list (notes + conversation summaries) with default recent 10.
 4. Embedding generation pipeline.

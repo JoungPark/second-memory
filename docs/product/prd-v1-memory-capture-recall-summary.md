@@ -87,6 +87,8 @@
 
 1. Security and Privacy
 - Enforce tenant and user scoping in all read/write paths.
+- Validate Firebase ID tokens on all public API requests before service access.
+- Resolve Firebase uid to internal USER.id and tenant context for authorization checks.
 
 2. Latency
 - Recall endpoint target: p95 under 4 seconds.
@@ -100,7 +102,7 @@
 
 ## Dependencies
 
-1. Authentication and authorization setup.
+1. Firebase Authentication integration (ID token verification + USER.firebase_uid mapping).
 2. PostgreSQL and pgvector.
 3. Worker queue for embedding generation.
 4. LLM provider integration.

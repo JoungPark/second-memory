@@ -49,3 +49,5 @@ Acceptance Criteria:
 2. Cross-tenant access attempts are denied.
 3. Denied access events are audit logged.
 4. The same authorization boundaries apply on both web and mobile clients.
+5. Public APIs accept only valid Firebase ID tokens.
+6. Firebase uid is mapped to internal USER.id and tenant scope before authorization checks.

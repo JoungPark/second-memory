@@ -8,6 +8,8 @@
 4. Inference cost may rise from summary generation at ask-session END.
 5. Ask-to-Memory dependency can cause summary write failures during transient outages.
 6. Temporary ask-session state may be lost on Ask Service restarts.
+7. Incorrect Firebase uid to internal user mapping can cause authorization failures or data access errors.
+8. Missing or incorrect tenant context derived from auth claims can increase cross-tenant leakage risk.
 
 ## Assumptions
 
@@ -16,6 +18,8 @@
 3. Solo development benefits from operational simplicity over early optimization.
 4. V1 uses in-memory ask-session state with TTL and explicit cleanup on END.
 5. Conversation summaries are persisted as entry_type=conversation_summary in the main entry model.
+6. Firebase Authentication is the V1 identity provider.
+7. USER.firebase_uid uniquely maps Firebase identity to internal USER.id.
 
 ## Open Questions
 

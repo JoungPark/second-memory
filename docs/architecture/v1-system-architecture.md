@@ -39,7 +39,7 @@ flowchart LR
     W[Web Client] --> G[API Gateway / BFF]
     M[Mobile Client] --> G
 
-    G --> A[Auth Service]
+    G --> A[Firebase Auth]
     G --> MS[Memory Service]
     G --> AS[Ask Service]
 
@@ -73,7 +73,8 @@ flowchart LR
 - MVP framework choice: Expo.
 
 3. API Gateway / BFF
-- Validates auth tokens, injects tenant/user context, handles rate limits.
+- Validates Firebase ID tokens, injects tenant/user context, handles rate limits.
+- Resolves Firebase uid to internal USER.id and tenant_id before forwarding requests.
 
 4. Memory Service
 - Owns durable memory writes for note, self_talk, and conversation_summary entries.
@@ -122,6 +123,7 @@ erDiagram
       uuid id PK
       uuid tenant_id FK
       text email
+      text firebase_uid "UNIQUE"
       timestamptz created_at
     }
 
@@ -183,8 +185,14 @@ Notes:
 3. Use partial indexes for time-window queries and type filters.
 4. ENTRY.entry_type values: note, self_talk, conversation_summary.
 5. Conversation summaries are stored as ENTRY rows with entry_type=conversation_summary.
+6. keep USER.id as internal UUID primary key and store Firebase uid in USER.firebase_uid as unique, indexed text.
 
 ## 6. Key API Contracts (V1)
+
+Auth contract for public APIs:
+
+1. All public /v1/* endpoints require Authorization: Bearer <Firebase ID token>.
+2. API Gateway/BFF verifies token signature and expiry, then resolves internal tenant/user context.
 
 Public APIs
 

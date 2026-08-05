@@ -131,6 +131,11 @@ second-memory/
 - Persistence and backup strategy must be explicit before pilot traffic.
 - Resource limits for Redis/PostgreSQL containers must be set per environment tier.
 
+4. Authentication runtime notes
+- Firebase Authentication is the V1 identity provider.
+- apps/web and apps/mobile own Firebase client configuration for sign-in flows.
+- API Gateway/BFF verifies Firebase ID tokens and maps Firebase uid to internal USER.id.
+
 ## 9. Alignment with Other Architecture Docs
 
 1. Technology decisions and revisit triggers: see v1-implementation-decisions.md.

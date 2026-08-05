@@ -67,6 +67,12 @@ Out of scope:
 - Consequences: Pilot readiness requires explicit persistence, backup, and recovery controls.
 - Revisit trigger: Production scale or compliance requirements exceeding Dockerized stateful service operations.
 
+8. Authentication and Identity Mapping
+- Decision: Use Firebase Authentication for V1 identity, and map Firebase uid to internal USER records through USER.firebase_uid.
+- Rationale: Fast, managed authentication across web and mobile while preserving internal UUID-based relational integrity.
+- Consequences: Public APIs must validate Firebase ID tokens and resolve internal tenant/user context before service access.
+- Revisit trigger: Multi-provider federation requirements that exceed a single uid mapping strategy.
+
 ## 4. Compatibility Notes with V1 Architecture
 
 1. Logical architecture remains unchanged; these decisions only bind implementation choices.
