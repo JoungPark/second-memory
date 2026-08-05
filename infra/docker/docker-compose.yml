@@ -1,4 +1,4 @@
-version: "3.9"
+version: '3.9'
 name: second-memory
 
 services:
@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: second_memory_dev
       POSTGRES_DB: second_memory
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -21,11 +21,11 @@ services:
     container_name: second-memory-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
 
 volumes:
   postgres_data:

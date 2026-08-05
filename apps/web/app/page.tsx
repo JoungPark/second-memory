@@ -1,4 +1,4 @@
-import { SharedWelcome } from "@second-memory/ui";
+import { SharedWelcome } from '@second-memory/ui';
 
 export default function Home() {
   return (
