@@ -14,10 +14,7 @@ export function configureGoogleSignIn(): void {
 
 export async function signInWithGoogle(): Promise<void> {
   await GoogleSignin.hasPlayServices();
-  console.log('start Google sign-in');
   const response = await GoogleSignin.signIn();
-
-  console.log('Google sign-in response:', response);
 
   if (!isSuccessResponse(response)) {
     return;
