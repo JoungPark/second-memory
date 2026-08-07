@@ -1,8 +1,8 @@
 import type { ExpoConfig } from 'expo/config';
 
 const config: ExpoConfig = {
-  name: 'mobile',
-  slug: 'mobile',
+  name: 'Second Memory',
+  slug: 'second-memory',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
