@@ -14,19 +14,20 @@
     "test": "echo \"TODO: add Expo test setup\""
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-async-storage/async-storage": "3.1.1",
     "@react-native-google-signin/google-signin": "^16.1.4",
     "@second-memory/ui": "workspace:*",
-    "expo": "~54.0.35",
-    "expo-dev-client": "^6.0.21",
-    "expo-status-bar": "~3.0.9",
+    "expo": "~57.0.11",
+    "expo-dev-client": "^57.0.10",
+    "expo-splash-screen": "~57.0.5",
+    "expo-status-bar": "~57.0.1",
     "firebase": "^12.17.1",
-    "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react": "19.2.3",
+    "react-native": "0.86.2"
   },
   "devDependencies": {
-    "@types/react": "~19.1.0",
-    "typescript": "~5.9.2"
+    "@types/react": "~19.2.18",
+    "typescript": "~6.0.3"
   },
   "private": true
 }

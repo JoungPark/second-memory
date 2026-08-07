@@ -7,9 +7,16 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
-  newArchEnabled: true,
   plugins: [
     'expo-dev-client',
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/splash-icon.png',
+        resizeMode: 'contain',
+        backgroundColor: '#ffffff',
+      },
+    ],
     [
       '@react-native-google-signin/google-signin',
       {
@@ -17,11 +24,6 @@ const config: ExpoConfig = {
       },
     ],
   ],
-  splash: {
-    image: './assets/splash-icon.png',
-    resizeMode: 'contain',
-    backgroundColor: '#ffffff',
-  },
   ios: {
     bundleIdentifier: 'com.secondmemory.mobile',
     googleServicesFile: './GoogleService-Info.plist',
@@ -34,7 +36,6 @@ const config: ExpoConfig = {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#ffffff',
     },
-    edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
   },
   web: {
