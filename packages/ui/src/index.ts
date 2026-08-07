@@ -1,16 +1,5 @@
-import type { ReactNode } from 'react';
+export { AuthProvider, useAuth } from './auth/AuthProvider';
+export { LoginButton, type LoginButtonRenderProps } from './auth/LoginButton';
+export { SharedWelcome, type SharedWelcomeProps } from './SharedWelcome';
 
 export const uiVersion = '0.1.0';
-
-export type SharedWelcomeProps = {
-  productName?: string;
-  children: (message: string) => ReactNode;
-};
-
-export function SharedWelcome({
-  productName = 'Second Memory',
-  children,
-}: SharedWelcomeProps) {
-  const message = `Welcome to ${productName}. Capture today, remember forever.`;
-  return children(message);
-}

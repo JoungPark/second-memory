@@ -2,15 +2,23 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 import { SharedWelcome } from '@second-memory/ui';
 
+import { LoginButton } from '@/components/LoginButton';
+import { MobileAuthProvider } from '@/components/MobileAuthProvider';
+
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Mobile</Text>
-      <SharedWelcome>
-        {(message) => <Text style={styles.message}>{message}</Text>}
-      </SharedWelcome>
-      <StatusBar style="auto" />
-    </View>
+    <MobileAuthProvider>
+      <View style={styles.container}>
+        <Text style={styles.title}>Mobile</Text>
+        <SharedWelcome>
+          {(message) => <Text style={styles.message}>{message}</Text>}
+        </SharedWelcome>
+        <View style={styles.auth}>
+          <LoginButton />
+        </View>
+        <StatusBar style="auto" />
+      </View>
+    </MobileAuthProvider>
   );
 }
 
@@ -29,6 +37,10 @@ const styles = StyleSheet.create({
   message: {
     color: '#3f3f46',
     textAlign: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  auth: {
     paddingHorizontal: 20,
   },
 });
