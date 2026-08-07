@@ -65,6 +65,32 @@ Or start from the monorepo dev task runner:
 pnpm dev
 ```
 
+## Release build: install on Android device (USB)
+
+Use this when you want a release APK on a physical device (e.g. Galaxy) without going through the Play Store.
+
+**Prerequisites:** USB debugging enabled on the device, `adb` on your PATH, Android SDK / Gradle set up.
+
+From the repository root:
+
+```bash
+# 1. Generate native Android project (if ios/ and android/ are missing or stale)
+pnpm --filter @second-memory/mobile prebuild
+
+# 2. Build release APK
+cd apps/mobile/android
+./gradlew assembleRelease
+
+# 3. Install on connected device
+adb install app/build/outputs/apk/release/app-release.apk
+```
+
+Notes:
+
+- `prebuild` in this repo runs `expo prebuild --clean` (wipes and regenerates `android/`).
+- If install fails because the app is already installed, use `adb install -r app/build/outputs/apk/release/app-release.apk`.
+- For day-to-day dev, prefer `pnpm --filter @second-memory/mobile android` (debug build + Metro).
+
 ## Scripts
 
 | Script    | Description                                      |
