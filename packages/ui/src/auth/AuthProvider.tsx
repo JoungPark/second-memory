@@ -21,6 +21,7 @@ type AuthContextValue = {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signOutUser: () => Promise<void>;
+  getIdToken: () => Promise<string | null>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -63,14 +64,23 @@ export function AuthProvider({ getAuth, signIn, children }: AuthProviderProps) {
     await signOut(auth);
   }, [auth]);
 
+  const getIdToken = useCallback(async () => {
+    if (!auth?.currentUser) {
+      return null;
+    }
+
+    return auth.currentUser.getIdToken();
+  }, [auth]);
+
   const value = useMemo(
     () => ({
       user,
       loading,
       signInWithGoogle,
       signOutUser,
+      getIdToken,
     }),
-    [user, loading, signInWithGoogle, signOutUser],
+    [user, loading, signInWithGoogle, signOutUser, getIdToken],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

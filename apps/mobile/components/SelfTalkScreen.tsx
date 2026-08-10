@@ -1,5 +1,7 @@
+import { useMemoryApi } from '@second-memory/ui';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
@@ -8,15 +10,31 @@ import {
 } from 'react-native';
 
 export function SelfTalkScreen() {
+  const memoryApi = useMemoryApi();
   const [text, setText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSend() {
+  async function handleSend() {
     const trimmed = text.trim();
-    if (!trimmed) {
+    if (!trimmed || submitting) {
       return;
     }
 
-    setText('');
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      await memoryApi.createMemory({
+        entryType: 'self_talk',
+        content: trimmed,
+      });
+      setText('');
+    } catch (sendError) {
+      setError(sendError instanceof Error ? sendError.message : 'Failed to save memory');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -29,13 +47,18 @@ export function SelfTalkScreen() {
         multiline
         style={styles.input}
       />
+      {error ? <Text style={styles.error}>{error}</Text> : null}
       <View style={styles.actions}>
         <Pressable
-          style={[styles.button, !text.trim() && styles.buttonDisabled]}
-          disabled={!text.trim()}
-          onPress={handleSend}
+          style={[styles.button, (!text.trim() || submitting) && styles.buttonDisabled]}
+          disabled={!text.trim() || submitting}
+          onPress={() => void handleSend()}
         >
-          <Text style={styles.buttonText}>Send</Text>
+          {submitting ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <Text style={styles.buttonText}>Send</Text>
+          )}
         </Pressable>
       </View>
     </View>
@@ -57,6 +80,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#18181b',
     textAlignVertical: 'top',
+  },
+  error: {
+    color: '#dc2626',
+    fontSize: 13,
   },
   actions: {
     flexDirection: 'row',

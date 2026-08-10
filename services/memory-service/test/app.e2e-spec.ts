@@ -1,6 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
+import { FirebaseAuthService } from '../src/auth/firebase-auth.service';
 import { AppModule } from '../src/app.module';
 import { REQUEST_CONTEXT_HEADERS } from '../src/common/context/request-context.constants';
 
@@ -10,7 +11,15 @@ describe('MemoryService (e2e)', () => {
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(FirebaseAuthService)
+      .useValue({
+        verifyIdToken: jest.fn(async (token: string) => ({
+          firebaseUid: token,
+          userId: token,
+        })),
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
@@ -34,11 +43,11 @@ describe('MemoryService (e2e)', () => {
     });
   });
 
-  it('POST /v1/memories creates a memory when context headers are present', async () => {
+  it('POST /v1/memories creates a memory when auth headers are present', async () => {
     const response = await request(app.getHttpServer())
       .post('/v1/memories')
       .set(REQUEST_CONTEXT_HEADERS.tenantId, 'tenant-1')
-      .set(REQUEST_CONTEXT_HEADERS.userId, 'user-1')
+      .set('Authorization', 'Bearer firebase-user-1')
       .send({
         entryType: 'note',
         content: 'Capture from e2e test',
@@ -49,12 +58,24 @@ describe('MemoryService (e2e)', () => {
     expect(response.body.createdAt).toBeDefined();
   });
 
-  it('POST /v1/memories rejects requests without context headers', () => {
+  it('POST /v1/memories rejects requests without Authorization header', () => {
     return request(app.getHttpServer())
       .post('/v1/memories')
+      .set(REQUEST_CONTEXT_HEADERS.tenantId, 'tenant-1')
       .send({
         entryType: 'note',
-        content: 'Missing headers',
+        content: 'Missing auth token',
+      })
+      .expect(401);
+  });
+
+  it('POST /v1/memories rejects requests without tenant header', () => {
+    return request(app.getHttpServer())
+      .post('/v1/memories')
+      .set('Authorization', 'Bearer firebase-user-1')
+      .send({
+        entryType: 'note',
+        content: 'Missing tenant header',
       })
       .expect(400);
   });
