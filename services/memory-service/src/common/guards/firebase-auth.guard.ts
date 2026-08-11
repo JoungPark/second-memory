@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   CanActivate,
   ExecutionContext,
   Injectable,
@@ -9,7 +8,6 @@ import type { RequestContext } from '@second-memory/shared-types';
 import { FirebaseAuthService } from '../../auth/firebase-auth.service';
 import {
   AUTHORIZATION_HEADER,
-  REQUEST_CONTEXT_HEADERS,
   REQUEST_CONTEXT_KEY,
 } from '../context/request-context.constants';
 
@@ -23,13 +21,6 @@ export class FirebaseAuthGuard implements CanActivate {
       [REQUEST_CONTEXT_KEY]?: RequestContext;
     }>();
 
-    const tenantId = readHeader(request.headers, REQUEST_CONTEXT_HEADERS.tenantId);
-    if (!tenantId) {
-      throw new BadRequestException(
-        `Missing required header: ${REQUEST_CONTEXT_HEADERS.tenantId}`,
-      );
-    }
-
     const idToken = extractBearerToken(
       readHeader(request.headers, AUTHORIZATION_HEADER),
     );
@@ -42,7 +33,7 @@ export class FirebaseAuthGuard implements CanActivate {
     const verified = await this.firebaseAuthService.verifyIdToken(idToken);
 
     request[REQUEST_CONTEXT_KEY] = {
-      tenantId,
+      tenantId: verified.tenantId,
       userId: verified.userId,
     };
 

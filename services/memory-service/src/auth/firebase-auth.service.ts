@@ -1,9 +1,11 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
+import { UsersService } from '../users/users.service';
 
 export interface VerifiedFirebaseToken {
   firebaseUid: string;
+  tenantId: string;
   userId: string;
 }
 
@@ -11,18 +13,25 @@ export interface VerifiedFirebaseToken {
 export class FirebaseAuthService {
   private initialized = false;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly usersService: UsersService,
+  ) {}
 
   async verifyIdToken(idToken: string): Promise<VerifiedFirebaseToken> {
     this.ensureInitialized();
 
     try {
       const decoded = await admin.auth().verifyIdToken(idToken);
-      const firebaseUid = decoded.uid;
+      const { tenantId, userId } = this.usersService.findOrCreateByFirebaseUid(
+        decoded.uid,
+        decoded.email,
+      );
 
       return {
-        firebaseUid,
-        userId: await this.resolveUserId(firebaseUid),
+        firebaseUid: decoded.uid,
+        tenantId,
+        userId,
       };
     } catch {
       throw new UnauthorizedException('Invalid or expired Firebase ID token');
@@ -45,13 +54,5 @@ export class FirebaseAuthService {
     }
 
     this.initialized = true;
-  }
-
-  /**
-   * Maps Firebase uid to internal user id.
-   * Until USER persistence lands, firebase uid is used as the internal user id.
-   */
-  private async resolveUserId(firebaseUid: string): Promise<string> {
-    return firebaseUid;
   }
 }

@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { FirebaseAuthService } from '../src/auth/firebase-auth.service';
 import { AppModule } from '../src/app.module';
-import { REQUEST_CONTEXT_HEADERS } from '../src/common/context/request-context.constants';
+import { UsersService } from '../src/users/users.service';
 
 describe('MemoryService (e2e)', () => {
   let app: INestApplication;
@@ -13,11 +13,18 @@ describe('MemoryService (e2e)', () => {
       imports: [AppModule],
     })
       .overrideProvider(FirebaseAuthService)
-      .useValue({
-        verifyIdToken: jest.fn(async (token: string) => ({
-          firebaseUid: token,
-          userId: token,
-        })),
+      .useFactory({
+        factory: (usersService: UsersService) => ({
+          verifyIdToken: jest.fn(async (token: string) => {
+            const resolved = usersService.findOrCreateByFirebaseUid(token);
+            return {
+              firebaseUid: token,
+              tenantId: resolved.tenantId,
+              userId: resolved.userId,
+            };
+          }),
+        }),
+        inject: [UsersService],
       })
       .compile();
 
@@ -46,7 +53,6 @@ describe('MemoryService (e2e)', () => {
   it('POST /v1/memories creates a memory when auth headers are present', async () => {
     const response = await request(app.getHttpServer())
       .post('/v1/memories')
-      .set(REQUEST_CONTEXT_HEADERS.tenantId, 'tenant-1')
       .set('Authorization', 'Bearer firebase-user-1')
       .send({
         entryType: 'note',
@@ -61,7 +67,6 @@ describe('MemoryService (e2e)', () => {
   it('POST /v1/memories rejects requests without Authorization header', () => {
     return request(app.getHttpServer())
       .post('/v1/memories')
-      .set(REQUEST_CONTEXT_HEADERS.tenantId, 'tenant-1')
       .send({
         entryType: 'note',
         content: 'Missing auth token',
@@ -69,14 +74,40 @@ describe('MemoryService (e2e)', () => {
       .expect(401);
   });
 
-  it('POST /v1/memories rejects requests without tenant header', () => {
-    return request(app.getHttpServer())
+  it('provisions user on first authenticated request', async () => {
+    const token = 'firebase-user-provision';
+
+    const first = await request(app.getHttpServer())
       .post('/v1/memories')
-      .set('Authorization', 'Bearer firebase-user-1')
+      .set('Authorization', `Bearer ${token}`)
       .send({
         entryType: 'note',
-        content: 'Missing tenant header',
+        content: 'First request',
       })
-      .expect(400);
+      .expect(201);
+
+    const listFirst = await request(app.getHttpServer())
+      .get('/v1/memories')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(listFirst.body.items).toHaveLength(1);
+    expect(listFirst.body.items[0]?.id).toBe(first.body.id);
+
+    await request(app.getHttpServer())
+      .post('/v1/memories')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        entryType: 'note',
+        content: 'Second request',
+      })
+      .expect(201);
+
+    const listSecond = await request(app.getHttpServer())
+      .get('/v1/memories')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(listSecond.body.items).toHaveLength(2);
   });
 });

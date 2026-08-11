@@ -10,18 +10,15 @@ export type GetIdToken = () => Promise<string | null>;
 export interface MemoryApiClientOptions {
   baseUrl: string;
   getIdToken: GetIdToken;
-  getTenantId?: () => string | Promise<string>;
 }
 
 export class MemoryApiClient {
   private readonly baseUrl: string;
   private readonly getIdToken: GetIdToken;
-  private readonly getTenantId: () => string | Promise<string>;
 
   constructor(options: MemoryApiClientOptions) {
     this.baseUrl = options.baseUrl.replace(/\/$/, '');
     this.getIdToken = options.getIdToken;
-    this.getTenantId = options.getTenantId ?? (() => 'default');
   }
 
   async createMemory(body: CreateMemoryRequest): Promise<CreateMemoryResponse> {
@@ -56,10 +53,8 @@ export class MemoryApiClient {
       throw new Error('Not authenticated. Sign in to obtain a Firebase ID token.');
     }
 
-    const tenantId = await this.getTenantId();
     const headers = new Headers(init.headers);
     headers.set('Authorization', `Bearer ${token}`);
-    headers.set('x-tenant-id', tenantId);
 
     if (init.body && !headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json');

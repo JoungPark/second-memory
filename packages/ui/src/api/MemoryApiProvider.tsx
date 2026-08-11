@@ -17,13 +17,11 @@ const MemoryApiContext = createContext<MemoryApiContextValue | null>(null);
 
 type MemoryApiProviderProps = {
   baseUrl: string;
-  getTenantId?: () => string | Promise<string>;
   children: ReactNode;
 };
 
 export function MemoryApiProvider({
   baseUrl,
-  getTenantId,
   children,
 }: MemoryApiProviderProps) {
   const { getIdToken } = useAuth();
@@ -33,9 +31,8 @@ export function MemoryApiProvider({
       new MemoryApiClient({
         baseUrl,
         getIdToken,
-        getTenantId,
       }),
-    [baseUrl, getIdToken, getTenantId],
+    [baseUrl, getIdToken],
   );
 
   const value = useMemo(() => ({ memoryApi }), [memoryApi]);
