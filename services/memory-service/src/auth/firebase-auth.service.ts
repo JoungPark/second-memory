@@ -23,7 +23,7 @@ export class FirebaseAuthService {
 
     try {
       const decoded = await admin.auth().verifyIdToken(idToken);
-      const { tenantId, userId } = this.usersService.findOrCreateByFirebaseUid(
+      const { tenantId, userId } = await this.usersService.findOrCreateByFirebaseUid(
         decoded.uid,
         decoded.email,
       );

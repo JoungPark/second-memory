@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  users     User[]
+  entries   Entry[]
+  tags      Tag[]
+
+  @@map("tenants")
+}
+
+model User {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  email       String?
+  firebaseUid String   @unique @map("firebase_uid")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  entries     Entry[]
+
+  @@index([tenantId])
+  @@map("users")
+}
+
+model Entry {
+  id               String     @id @default(uuid()) @db.Uuid
+  tenantId         String     @map("tenant_id") @db.Uuid
+  userId           String     @map("user_id") @db.Uuid
+  entryType        String     @map("entry_type")
+  content          String
+  occurredAt       DateTime   @map("occurred_at") @db.Timestamptz(6)
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  idempotencyKey   String?    @map("idempotency_key")
+  sourceReferences String[]   @default([]) @map("source_references")
+  tenant           Tenant     @relation(fields: [tenantId], references: [id])
+  user             User       @relation(fields: [userId], references: [id])
+  entryTags        EntryTag[]
+
+  @@unique([tenantId, userId, idempotencyKey])
+  @@index([tenantId, userId, occurredAt(sort: Desc)])
+  @@index([tenantId, userId, entryType])
+  @@map("entries")
+}
+
+model Tag {
+  id        String     @id @default(uuid()) @db.Uuid
+  tenantId  String     @map("tenant_id") @db.Uuid
+  name      String
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  entryTags EntryTag[]
+
+  @@unique([tenantId, name])
+  @@map("tags")
+}
+
+model EntryTag {
+  entryId String @map("entry_id") @db.Uuid
+  tagId   String @map("tag_id") @db.Uuid
+  entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, tagId])
+  @@map("entry_tags")
+}

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { PrismaService } from '../database/prisma.service';
 
 export interface StoredUser {
   id: string;
@@ -9,32 +9,54 @@ export interface StoredUser {
   createdAt: string;
 }
 
-/**
- * In-memory USER/TENANT store for local development until PostgreSQL integration lands.
- */
 @Injectable()
 export class UsersRepository {
-  private readonly usersByFirebaseUid = new Map<string, StoredUser>();
+  constructor(private readonly prisma: PrismaService) {}
 
-  findByFirebaseUid(firebaseUid: string): StoredUser | undefined {
-    return this.usersByFirebaseUid.get(firebaseUid);
+  async findByFirebaseUid(firebaseUid: string): Promise<StoredUser | undefined> {
+    const user = await this.prisma.user.findUnique({
+      where: { firebaseUid },
+    });
+
+    return user ? this.toStoredUser(user) : undefined;
   }
 
-  createTenantAndUser(firebaseUid: string, email?: string): StoredUser {
-    const existing = this.usersByFirebaseUid.get(firebaseUid);
+  async createTenantAndUser(firebaseUid: string, email?: string): Promise<StoredUser> {
+    const existing = await this.findByFirebaseUid(firebaseUid);
     if (existing) {
       return existing;
     }
 
-    const user: StoredUser = {
-      id: randomUUID(),
-      tenantId: randomUUID(),
-      firebaseUid,
-      email,
-      createdAt: new Date().toISOString(),
-    };
+    const user = await this.prisma.$transaction(async (tx) => {
+      const tenant = await tx.tenant.create({
+        data: {},
+      });
 
-    this.usersByFirebaseUid.set(firebaseUid, user);
-    return user;
+      return tx.user.create({
+        data: {
+          tenantId: tenant.id,
+          firebaseUid,
+          email,
+        },
+      });
+    });
+
+    return this.toStoredUser(user);
+  }
+
+  private toStoredUser(user: {
+    id: string;
+    tenantId: string;
+    firebaseUid: string;
+    email: string | null;
+    createdAt: Date;
+  }): StoredUser {
+    return {
+      id: user.id,
+      tenantId: user.tenantId,
+      firebaseUid: user.firebaseUid,
+      email: user.email ?? undefined,
+      createdAt: user.createdAt.toISOString(),
+    };
   }
 }

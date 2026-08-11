@@ -5,6 +5,7 @@ import { MemoriesService } from './memories.service';
 
 describe('MemoriesService', () => {
   let service: MemoriesService;
+  let repository: jest.Mocked<MemoriesRepository>;
 
   const context: RequestContext = {
     tenantId: 'tenant-1',
@@ -12,34 +13,65 @@ describe('MemoriesService', () => {
   };
 
   beforeEach(async () => {
+    repository = {
+      create: jest.fn(),
+      list: jest.fn(),
+      search: jest.fn(),
+    } as unknown as jest.Mocked<MemoriesRepository>;
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MemoriesService, MemoriesRepository],
+      providers: [
+        MemoriesService,
+        {
+          provide: MemoriesRepository,
+          useValue: repository,
+        },
+      ],
     }).compile();
 
     service = module.get(MemoriesService);
   });
 
-  it('creates and lists memories for the scoped user', () => {
-    const created = service.createMemory(context, {
+  it('creates and lists memories for the scoped user', async () => {
+    repository.create.mockResolvedValue({
+      id: 'memory-1',
+      createdAt: '2026-08-11T00:00:00.000Z',
+    });
+    repository.list.mockResolvedValue({
+      items: [
+        {
+          id: 'memory-1',
+          entryType: 'note',
+          content: 'Remember to buy milk',
+          occurredAt: '2026-08-11T00:00:00.000Z',
+          createdAt: '2026-08-11T00:00:00.000Z',
+        },
+      ],
+    });
+
+    const created = await service.createMemory(context, {
       entryType: 'note',
       content: 'Remember to buy milk',
     });
+    const listed = await service.listMemories(context, {});
 
-    const listed = service.listMemories(context, {});
-
-    expect(created.id).toBeDefined();
+    expect(created.id).toBe('memory-1');
     expect(listed.items).toHaveLength(1);
     expect(listed.items[0]?.content).toBe('Remember to buy milk');
   });
 
-  it('returns the same entry for duplicate idempotency keys', () => {
-    const first = service.createMemory(context, {
+  it('returns the same entry for duplicate idempotency keys', async () => {
+    repository.create.mockResolvedValue({
+      id: 'memory-1',
+      createdAt: '2026-08-11T00:00:00.000Z',
+    });
+
+    const first = await service.createMemory(context, {
       entryType: 'self_talk',
       content: 'I felt calm today',
       idempotencyKey: 'capture-1',
     });
-
-    const second = service.createMemory(context, {
+    const second = await service.createMemory(context, {
       entryType: 'self_talk',
       content: 'I felt calm today',
       idempotencyKey: 'capture-1',
@@ -48,13 +80,20 @@ describe('MemoriesService', () => {
     expect(second.id).toBe(first.id);
   });
 
-  it('searches memories by keyword', () => {
-    service.createMemory(context, {
-      entryType: 'note',
-      content: 'Project kickoff notes',
+  it('searches memories by keyword', async () => {
+    repository.search.mockResolvedValue({
+      results: [
+        {
+          id: 'memory-1',
+          entryType: 'note',
+          content: 'Project kickoff notes',
+          occurredAt: '2026-08-11T00:00:00.000Z',
+          score: 0.5,
+        },
+      ],
     });
 
-    const results = service.searchMemories(context, {
+    const results = await service.searchMemories(context, {
       query: 'kickoff',
       topK: 5,
     });

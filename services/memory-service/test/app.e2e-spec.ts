@@ -4,11 +4,14 @@ import request from 'supertest';
 import { FirebaseAuthService } from '../src/auth/firebase-auth.service';
 import { AppModule } from '../src/app.module';
 import { UsersService } from '../src/users/users.service';
+import { disconnectDatabase, resetDatabase } from './test-database';
 
 describe('MemoryService (e2e)', () => {
   let app: INestApplication;
 
   beforeEach(async () => {
+    await resetDatabase();
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -16,7 +19,7 @@ describe('MemoryService (e2e)', () => {
       .useFactory({
         factory: (usersService: UsersService) => ({
           verifyIdToken: jest.fn(async (token: string) => {
-            const resolved = usersService.findOrCreateByFirebaseUid(token);
+            const resolved = await usersService.findOrCreateByFirebaseUid(token);
             return {
               firebaseUid: token,
               tenantId: resolved.tenantId,
@@ -43,11 +46,19 @@ describe('MemoryService (e2e)', () => {
     await app.close();
   });
 
+  afterAll(async () => {
+    await disconnectDatabase();
+  });
+
   it('GET /health returns ok', () => {
-    return request(app.getHttpServer()).get('/health').expect(200).expect({
-      status: 'ok',
-      service: 'memory-service',
-    });
+    return request(app.getHttpServer())
+      .get('/health')
+      .expect(200)
+      .expect({
+        status: 'ok',
+        service: 'memory-service',
+        database: 'ok',
+      });
   });
 
   it('POST /v1/memories creates a memory when auth headers are present', async () => {

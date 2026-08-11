@@ -42,6 +42,20 @@ infra/
 - `pnpm lint` runs `turbo run lint`
 - `pnpm test` runs `turbo run test`
 
+## Memory Service Database Setup
+
+PostgreSQL persistence uses Prisma in `services/memory-service`.
+
+```bash
+cd infra/docker && docker compose up -d postgres
+cd services/memory-service
+cp .env.example .env   # if needed
+pnpm db:migrate
+pnpm dev
+```
+
+E2E tests require Postgres running and apply migrations automatically via `test/global-setup.ts`.
+
 ## Next Steps
 
 1. Scaffold `apps/web` with Next.js and `apps/mobile` with Expo.

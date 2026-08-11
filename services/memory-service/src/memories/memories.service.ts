@@ -15,37 +15,37 @@ import { MemoriesRepository } from './memories.repository';
 export class MemoriesService {
   constructor(private readonly repository: MemoriesRepository) {}
 
-  createMemory(
+  async createMemory(
     context: RequestContext,
     request: CreateMemoryRequest,
-  ): CreateMemoryResponse {
-    const response = this.repository.create(context, request);
+  ): Promise<CreateMemoryResponse> {
+    const response = await this.repository.create(context, request);
 
-    // TODO: persist to PostgreSQL and enqueue embedding jobs via outbox/BullMQ.
+    // TODO: enqueue embedding jobs via outbox/BullMQ.
     return response;
   }
 
-  createInternalMemory(
+  async createInternalMemory(
     context: RequestContext,
     request: CreateInternalMemoryRequest,
-  ): CreateMemoryResponse {
-    const response = this.repository.create(context, request);
+  ): Promise<CreateMemoryResponse> {
+    const response = await this.repository.create(context, request);
 
-    // TODO: persist to PostgreSQL and enqueue embedding jobs via outbox/BullMQ.
+    // TODO: enqueue embedding jobs via outbox/BullMQ.
     return response;
   }
 
-  listMemories(
+  async listMemories(
     context: RequestContext,
     query: ListMemoriesQuery,
-  ): ListMemoriesResponse {
+  ): Promise<ListMemoriesResponse> {
     return this.repository.list(context, query);
   }
 
-  searchMemories(
+  async searchMemories(
     context: RequestContext,
     request: SearchMemoriesRequest,
-  ): SearchMemoriesResponse {
+  ): Promise<SearchMemoriesResponse> {
     return this.repository.search(context, request);
   }
 }
