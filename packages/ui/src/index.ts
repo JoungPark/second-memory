@@ -1,6 +1,7 @@
 export { AuthProvider, useAuth } from './auth/AuthProvider';
 export { LoginButton, type LoginButtonRenderProps } from './auth/LoginButton';
 export { MemoryApiProvider, useMemoryApi } from './api/MemoryApiProvider';
+export { useRecentMemories } from './api/useRecentMemories';
 export { SharedWelcome, type SharedWelcomeProps } from './SharedWelcome';
 export { type AppMode, type ChatMessage } from './AppMode';
 

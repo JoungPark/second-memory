@@ -133,6 +133,9 @@ importers:
       '@second-memory/client-sdk':
         specifier: workspace:*
         version: link:../client-sdk
+      '@second-memory/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
       react:
         specifier: 19.2.3
         version: 19.2.3
