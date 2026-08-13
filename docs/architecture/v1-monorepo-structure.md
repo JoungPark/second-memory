@@ -77,7 +77,7 @@ second-memory/
 - Contains independently deployable backend units.
 - services/memory-service owns capture/list/search and persistence boundaries.
 - services/ask-service owns retrieval orchestration, LLM interaction, and ask session flow.
-- services/worker-embeddings owns background embedding generation and retry handling.
+- services/worker-embeddings owns background embedding generation and retry handling (Python + BullMQ consumer).
 
 3. packages/
 - Contains non-deployable shared libraries.

@@ -27,6 +27,26 @@ services:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     command: ['redis-server', '/usr/local/etc/redis/redis.conf']
 
+  worker-embeddings:
+    image: python:3.12-slim
+    container_name: second-memory-worker-embeddings
+    restart: unless-stopped
+    working_dir: /app/services/worker-embeddings
+    volumes:
+      - ../..:/app
+    environment:
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://second_memory:second_memory_dev@postgres:5432/second_memory
+      EMBEDDING_MODEL: sentence-transformers/all-MiniLM-L6-v2
+      WORKER_CONCURRENCY: 5
+    depends_on:
+      - postgres
+      - redis
+    command: >
+      sh -c "pip install uv &&
+      uv sync &&
+      uv run python -m worker_embeddings.main"
+
 volumes:
   postgres_data:
   redis_data:

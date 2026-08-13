@@ -1,0 +1,36 @@
+[project]
+name = "worker-embeddings"
+version = "0.1.0"
+description = "BullMQ embedding worker for second-memory"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "bullmq>=2.0.0",
+    "psycopg[binary]>=3.2.0",
+    "pgvector>=0.4.0",
+    "sentence-transformers>=3.4.0",
+    "pydantic-settings>=2.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.25.0",
+]
+
+[project.scripts]
+worker-embeddings = "worker_embeddings.main:run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/worker_embeddings"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/worker_embeddings", "tests", "README.md"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -9,19 +9,22 @@ import type {
   SearchMemoriesRequest,
   SearchMemoriesResponse,
 } from '@second-memory/shared-types';
+import { OutboxRelayService } from '../queue/outbox-relay.service';
 import { MemoriesRepository } from './memories.repository';
 
 @Injectable()
 export class MemoriesService {
-  constructor(private readonly repository: MemoriesRepository) {}
+  constructor(
+    private readonly repository: MemoriesRepository,
+    private readonly outboxRelay: OutboxRelayService,
+  ) {}
 
   async createMemory(
     context: RequestContext,
     request: CreateMemoryRequest,
   ): Promise<CreateMemoryResponse> {
     const response = await this.repository.create(context, request);
-
-    // TODO: enqueue embedding jobs via outbox/BullMQ.
+    void this.outboxRelay.relayPendingEvents();
     return response;
   }
 
@@ -30,8 +33,7 @@ export class MemoriesService {
     request: CreateInternalMemoryRequest,
   ): Promise<CreateMemoryResponse> {
     const response = await this.repository.create(context, request);
-
-    // TODO: enqueue embedding jobs via outbox/BullMQ.
+    void this.outboxRelay.relayPendingEvents();
     return response;
   }
 

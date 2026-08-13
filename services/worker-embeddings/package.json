@@ -3,9 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev": "echo \"TODO: scaffold BullMQ worker\"",
-    "build": "echo \"TODO: build worker\"",
-    "lint": "echo \"TODO: lint worker\"",
-    "test": "echo \"TODO: test worker\""
+    "dev": "uv run python -m worker_embeddings.main",
+    "build": "uv sync",
+    "lint": "uv run python -m compileall src/worker_embeddings",
+    "test": "uv run pytest"
   }
 }

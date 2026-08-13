@@ -79,3 +79,15 @@ export interface RequestContext {
   tenantId: string;
   userId: string;
 }
+
+export const EMBEDDING_QUEUE_NAME = 'embedding-jobs' as const;
+export const EMBEDDING_JOB_NAME = 'embed-entry' as const;
+
+export interface EmbeddingJobPayload {
+  entryId: string;
+  tenantId: string;
+  userId: string;
+  content: string;
+}
+
+export const EMBEDDING_DIMENSIONS = 384 as const;

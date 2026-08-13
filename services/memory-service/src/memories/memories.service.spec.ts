@@ -1,11 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import type { RequestContext } from '@second-memory/shared-types';
+import { OutboxRelayService } from '../queue/outbox-relay.service';
 import { MemoriesRepository } from './memories.repository';
 import { MemoriesService } from './memories.service';
 
 describe('MemoriesService', () => {
   let service: MemoriesService;
   let repository: jest.Mocked<MemoriesRepository>;
+  let outboxRelay: jest.Mocked<OutboxRelayService>;
 
   const context: RequestContext = {
     tenantId: 'tenant-1',
@@ -18,6 +20,9 @@ describe('MemoriesService', () => {
       list: jest.fn(),
       search: jest.fn(),
     } as unknown as jest.Mocked<MemoriesRepository>;
+    outboxRelay = {
+      relayPendingEvents: jest.fn().mockResolvedValue(0),
+    } as unknown as jest.Mocked<OutboxRelayService>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -25,6 +30,10 @@ describe('MemoriesService', () => {
         {
           provide: MemoriesRepository,
           useValue: repository,
+        },
+        {
+          provide: OutboxRelayService,
+          useValue: outboxRelay,
         },
       ],
     }).compile();

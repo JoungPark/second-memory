@@ -1,10 +1,13 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
 import { FirebaseAuthService } from '../src/auth/firebase-auth.service';
 import { AppModule } from '../src/app.module';
 import { UsersService } from '../src/users/users.service';
 import { disconnectDatabase, resetDatabase } from './test-database';
+
+const prisma = new PrismaClient();
 
 describe('MemoryService (e2e)', () => {
   let app: INestApplication;
@@ -73,6 +76,12 @@ describe('MemoryService (e2e)', () => {
 
     expect(response.body.id).toBeDefined();
     expect(response.body.createdAt).toBeDefined();
+
+    const outboxEvents = await prisma.outboxEvent.findMany({
+      where: { aggregateId: response.body.id },
+    });
+    expect(outboxEvents).toHaveLength(1);
+    expect(outboxEvents[0]?.eventType).toBe('entry.created');
   });
 
   it('POST /v1/memories rejects requests without Authorization header', () => {

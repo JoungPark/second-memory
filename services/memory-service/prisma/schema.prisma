@@ -44,6 +44,7 @@ model Entry {
   tenant           Tenant     @relation(fields: [tenantId], references: [id])
   user             User       @relation(fields: [userId], references: [id])
   entryTags        EntryTag[]
+  embedding        EntryEmbedding?
 
   @@unique([tenantId, userId, idempotencyKey])
   @@index([tenantId, userId, occurredAt(sort: Desc)])
@@ -70,4 +71,26 @@ model EntryTag {
 
   @@id([entryId, tagId])
   @@map("entry_tags")
+}
+
+model OutboxEvent {
+  id          String    @id @default(uuid()) @db.Uuid
+  aggregateId String    @map("aggregate_id") @db.Uuid
+  eventType   String    @map("event_type")
+  payload     Json
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  publishedAt DateTime? @map("published_at") @db.Timestamptz(6)
+
+  @@index([publishedAt, createdAt])
+  @@map("outbox_events")
+}
+
+model EntryEmbedding {
+  entryId    String                      @id @map("entry_id") @db.Uuid
+  embedding  Unsupported("vector(384)")?
+  model      String
+  embeddedAt DateTime                    @default(now()) @map("embedded_at") @db.Timestamptz(6)
+  entry      Entry                       @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@map("entry_embeddings")
 }

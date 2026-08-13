@@ -4,6 +4,8 @@ const prisma = new PrismaClient();
 
 export async function resetDatabase(): Promise<void> {
   await prisma.entryTag.deleteMany();
+  await prisma.entryEmbedding.deleteMany();
+  await prisma.outboxEvent.deleteMany();
   await prisma.entry.deleteMany();
   await prisma.tag.deleteMany();
   await prisma.user.deleteMany();

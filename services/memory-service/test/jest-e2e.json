@@ -6,5 +6,8 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
+  "moduleNameMapper": {
+    "^@second-memory/shared-types$": "<rootDir>/../../../packages/shared-types/src/index.ts"
+  },
   "globalSetup": "<rootDir>/global-setup.ts"
 }

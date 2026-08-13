@@ -5,6 +5,7 @@ import configuration from './config/configuration';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { MemoriesModule } from './memories/memories.module';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { MemoriesModule } from './memories/memories.module';
     DatabaseModule,
     AuthModule,
     HealthModule,
+    QueueModule,
     MemoriesModule,
   ],
 })

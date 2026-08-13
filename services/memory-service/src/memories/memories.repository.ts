@@ -52,6 +52,19 @@ export class MemoriesRepository {
           await this.attachTags(tx, context.tenantId, created.id, tags);
         }
 
+        await tx.outboxEvent.create({
+          data: {
+            aggregateId: created.id,
+            eventType: 'entry.created',
+            payload: {
+              entryId: created.id,
+              tenantId: context.tenantId,
+              userId: context.userId,
+              content: created.content,
+            },
+          },
+        });
+
         return created;
       });
 
