@@ -11,7 +11,7 @@ import type {
   SearchMemoriesRequest,
   SearchMemoriesResponse,
 } from '@second-memory/shared-types';
-import { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '@second-memory/server-db';
 
 @Injectable()
 export class MemoriesRepository {

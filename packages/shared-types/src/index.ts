@@ -80,6 +80,27 @@ export interface RequestContext {
   userId: string;
 }
 
+export interface AskCitation {
+  memoryId: string;
+  entryType: EntryType;
+  excerpt: string;
+}
+
+export interface AskMessageRequest {
+  sessionId?: string;
+  message: string;
+  topK?: number;
+  filters?: SearchMemoriesRequest['filters'];
+}
+
+export interface AskMessageResponse {
+  sessionId: string;
+  answer: string;
+  citations: AskCitation[];
+  confidence: number;
+  lowConfidenceFlag: boolean;
+}
+
 export const EMBEDDING_QUEUE_NAME = 'embedding-jobs' as const;
 export const EMBEDDING_JOB_NAME = 'embed-entry' as const;
 

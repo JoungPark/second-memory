@@ -2,9 +2,9 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
-import { FirebaseAuthService } from '../src/auth/firebase-auth.service';
+import { FirebaseAuthService } from '@second-memory/nest-auth';
+import { UsersService } from '@second-memory/server-db';
 import { AppModule } from '../src/app.module';
-import { UsersService } from '../src/users/users.service';
 import { disconnectDatabase, resetDatabase } from './test-database';
 
 const prisma = new PrismaClient();

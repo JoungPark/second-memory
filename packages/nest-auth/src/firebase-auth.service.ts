@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { UsersService } from '@second-memory/server-db';
 import * as admin from 'firebase-admin';
-import { UsersService } from '../users/users.service';
 
 export interface VerifiedFirebaseToken {
   firebaseUid: string;

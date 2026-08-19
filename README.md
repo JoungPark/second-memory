@@ -14,8 +14,8 @@ This repository is a pnpm + Turborepo monorepo aligned with the V1 architecture 
 | `apps/mobile` | Done | Expo mobile client — same flows as web |
 | `services/memory-service` | Done | NestJS memory API — capture, list, search, outbox → BullMQ |
 | `services/worker-embeddings` | Done | Python BullMQ worker — sentence-transformers → pgvector |
-| `services/ask-service` | Planned | RAG/chat orchestration |
-| `packages/*` | Partial | Shared types, client SDK, UI hooks |
+| `services/ask-service` | Milestone B | NestJS RAG/chat orchestration — `/v1/ask/messages` |
+| `packages/*` | Partial | Shared types, server-db, nest-auth, client SDK, UI hooks |
 
 ## Repository Layout
 
@@ -26,11 +26,13 @@ apps/
 
 services/
 	memory-service/      # NestJS memory APIs (done)
-	ask-service/         # Retrieval orchestration service (planned)
+	ask-service/         # NestJS RAG/chat orchestration (Milestone B)
 	worker-embeddings/   # Python BullMQ embedding worker (done)
 
 packages/
 	shared-types/        # Shared contracts and DTOs
+	server-db/           # Prisma schema, migrations, DatabaseModule, UsersModule
+	nest-auth/           # Firebase auth, guards, request-context utilities
 	shared-config/       # Shared lint/ts/build presets
 	ui/                  # Shared UI hooks and components
 	client-sdk/          # Typed client helpers
@@ -61,10 +63,10 @@ Start infrastructure, then run the services you need:
 # 1. Postgres + Redis
 cd infra/docker && docker compose up -d postgres redis
 
-# 2. Memory service
+# 2. Database migrations + memory service
+pnpm --filter @second-memory/server-db db:migrate
 cd services/memory-service
 cp .env.example .env   # if needed
-pnpm db:migrate
 pnpm dev
 
 # 3. Embedding worker (Python)
@@ -73,7 +75,12 @@ cp .env.example .env
 uv sync
 uv run python -m worker_embeddings.main
 
-# 4. Web and/or mobile (from repo root)
+# 4. Ask service
+cd services/ask-service
+cp .env.example .env   # if needed
+pnpm dev
+
+# 5. Web and/or mobile (from repo root)
 pnpm --filter @second-memory/web dev
 pnpm --filter @second-memory/mobile dev
 ```
@@ -86,13 +93,13 @@ pnpm dev
 
 ## Memory Service Database Setup
 
-PostgreSQL persistence uses Prisma in `services/memory-service`.
+PostgreSQL persistence uses Prisma in `packages/server-db`.
 
 ```bash
 cd infra/docker && docker compose up -d postgres
+pnpm --filter @second-memory/server-db db:migrate
 cd services/memory-service
 cp .env.example .env   # if needed
-pnpm db:migrate
 pnpm dev
 ```
 
@@ -118,6 +125,6 @@ cd infra/docker && docker compose up -d worker-embeddings
 
 ## Next Steps
 
-1. Scaffold `services/ask-service` for RAG/chat orchestration.
-2. Add vector search to `memory-service` `searchMemories` (replace keyword fallback).
+1. Add vector search to `memory-service` `searchMemories` (replace keyword fallback).
+2. Implement Milestone C: `POST /v1/ask/end` and client-sdk wiring.
 3. Add shared ESLint and tsconfig presets in `packages/shared-config`.

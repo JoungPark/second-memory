@@ -5,11 +5,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { RequestContext } from '@second-memory/shared-types';
-import { FirebaseAuthService } from '../../auth/firebase-auth.service';
 import {
   AUTHORIZATION_HEADER,
   REQUEST_CONTEXT_KEY,
 } from '../context/request-context.constants';
+import { extractBearerToken, readHeader } from '../context/header-utils';
+import { FirebaseAuthService } from '../firebase-auth.service';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
@@ -39,26 +40,4 @@ export class FirebaseAuthGuard implements CanActivate {
 
     return true;
   }
-}
-
-function readHeader(
-  headers: Record<string, string | string[] | undefined>,
-  name: string,
-): string {
-  const value = headers[name];
-
-  if (typeof value === 'string' && value.length > 0) {
-    return value;
-  }
-
-  if (Array.isArray(value) && value[0]) {
-    return value[0];
-  }
-
-  return '';
-}
-
-function extractBearerToken(authorizationHeader: string): string | null {
-  const match = authorizationHeader.match(/^Bearer\s+(.+)$/i);
-  return match?.[1]?.trim() ?? null;
 }

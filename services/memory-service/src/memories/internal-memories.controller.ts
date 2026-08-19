@@ -1,7 +1,6 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import type { RequestContext } from '@second-memory/shared-types';
-import { ReqContext } from '../common/context/request-context.decorator';
-import { InternalRequestContextGuard } from '../common/guards/internal-request-context.guard';
+import { InternalRequestContextGuard, ReqContext } from '@second-memory/nest-auth';
 import { CreateInternalMemoryDto, SearchMemoriesDto } from './dto/memory.dto';
 import { MemoriesService } from './memories.service';
 

@@ -1,11 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from '@second-memory/nest-auth';
 import { DatabaseModule } from '@second-memory/server-db';
+import { AskModule } from './ask/ask.module';
 import configuration from './config/configuration';
 import { HealthModule } from './health/health.module';
-import { MemoriesModule } from './memories/memories.module';
-import { QueueModule } from './queue/queue.module';
+import { LlmModule } from './llm/llm.module';
+import { MemoryModule } from './memory/memory.module';
+import { SessionsModule } from './sessions/sessions.module';
 
 @Module({
   imports: [
@@ -13,11 +16,14 @@ import { QueueModule } from './queue/queue.module';
       isGlobal: true,
       load: [configuration],
     }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     AuthModule,
     HealthModule,
-    QueueModule,
-    MemoriesModule,
+    MemoryModule,
+    SessionsModule,
+    LlmModule,
+    AskModule,
   ],
 })
 export class AppModule {}

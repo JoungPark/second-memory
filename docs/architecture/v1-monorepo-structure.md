@@ -45,6 +45,8 @@ second-memory/
 
   packages/
     shared-types/        # DTOs, API contracts, shared domain types
+    server-db/           # Prisma schema, migrations, DatabaseModule, UsersModule
+    nest-auth/           # Firebase auth, guards, request-context utilities
     shared-config/       # ESLint, TypeScript, lint/build presets
     ui/                  # Shared UI tokens/components where practical
     client-sdk/          # Typed API client helpers
@@ -82,6 +84,8 @@ second-memory/
 3. packages/
 - Contains non-deployable shared libraries.
 - shared-types is the contract boundary shared by apps and services.
+- server-db owns the canonical Prisma schema, migrations, DatabaseModule, and UsersModule.
+- nest-auth owns Firebase authentication, request-context guards/decorators, and internal S2S context validation.
 - shared-config centralizes linting/TypeScript/build conventions.
 - ui is optional and should contain only reusable, product-consistent components.
 - client-sdk wraps service APIs with typed request/response helpers.

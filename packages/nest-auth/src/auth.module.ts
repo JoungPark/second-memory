@@ -1,5 +1,5 @@
 import { Global, Module } from '@nestjs/common';
-import { UsersModule } from '../users/users.module';
+import { UsersModule } from '@second-memory/server-db';
 import { FirebaseAuthService } from './firebase-auth.service';
 
 @Global()

@@ -12,13 +12,13 @@ export class HealthController {
 
       return {
         status: 'ok',
-        service: 'memory-service',
+        service: 'ask-service',
         database: 'ok',
       };
     } catch {
       throw new ServiceUnavailableException({
         status: 'degraded',
-        service: 'memory-service',
+        service: 'ask-service',
         database: 'unavailable',
       });
     }

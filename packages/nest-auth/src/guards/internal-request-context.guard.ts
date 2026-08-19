@@ -9,6 +9,7 @@ import {
   REQUEST_CONTEXT_HEADERS,
   REQUEST_CONTEXT_KEY,
 } from '../context/request-context.constants';
+import { readHeader } from '../context/header-utils';
 
 /**
  * Service-to-service guard for internal routes.
@@ -34,21 +35,4 @@ export class InternalRequestContextGuard implements CanActivate {
     request[REQUEST_CONTEXT_KEY] = { tenantId, userId };
     return true;
   }
-}
-
-function readHeader(
-  headers: Record<string, string | string[] | undefined>,
-  name: string,
-): string {
-  const value = headers[name];
-
-  if (typeof value === 'string' && value.length > 0) {
-    return value;
-  }
-
-  if (Array.isArray(value) && value[0]) {
-    return value[0];
-  }
-
-  return '';
 }
