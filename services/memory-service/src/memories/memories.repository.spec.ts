@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { RequestContext } from '@second-memory/shared-types';
 import { PrismaService } from '@second-memory/server-db';
@@ -16,6 +17,7 @@ describe('MemoriesRepository search', () => {
   let embeddingService: {
     embedText: jest.Mock;
   };
+  let minSearchScore: number;
 
   const context: RequestContext = {
     tenantId: 'tenant-1',
@@ -23,6 +25,7 @@ describe('MemoriesRepository search', () => {
   };
 
   beforeEach(async () => {
+    minSearchScore = 0;
     prisma = {
       entry: {
         findMany: jest.fn(),
@@ -36,6 +39,18 @@ describe('MemoriesRepository search', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MemoriesRepository,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string, defaultValue?: unknown) => {
+              if (key === 'search.minScore') {
+                return minSearchScore;
+              }
+
+              return defaultValue;
+            }),
+          },
+        },
         {
           provide: PrismaService,
           useValue: prisma,
@@ -140,5 +155,55 @@ describe('MemoriesRepository search', () => {
     expect(embeddingService.embedText).not.toHaveBeenCalled();
     expect(prisma.$queryRaw).not.toHaveBeenCalled();
     expect(prisma.entry.findMany).not.toHaveBeenCalled();
+  });
+
+  it('excludes keyword results below the configured minimum score', async () => {
+    minSearchScore = 0.5;
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        MemoriesRepository,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string, defaultValue?: unknown) => {
+              if (key === 'search.minScore') {
+                return minSearchScore;
+              }
+
+              return defaultValue;
+            }),
+          },
+        },
+        {
+          provide: PrismaService,
+          useValue: prisma,
+        },
+        {
+          provide: EmbeddingService,
+          useValue: embeddingService,
+        },
+      ],
+    }).compile();
+
+    const filteredRepository = module.get(MemoriesRepository);
+    embeddingService.embedText.mockRejectedValue(
+      new EmbeddingUnavailableError('Could not reach embedding API'),
+    );
+    prisma.entry.findMany.mockResolvedValue([
+      {
+        id: 'memory-4',
+        entryType: 'note',
+        content: 'A short calm note',
+        occurredAt: new Date('2026-08-11T00:00:00.000Z'),
+      },
+    ]);
+
+    const response = await filteredRepository.search(context, {
+      query: 'calm',
+      topK: 5,
+    });
+
+    expect(response.results).toEqual([]);
   });
 });

@@ -16,4 +16,7 @@ export default () => ({
   embedding: {
     baseUrl: process.env.EMBEDDING_BASE_URL ?? 'http://localhost:8090',
   },
+  search: {
+    minScore: parseFloat(process.env.MIN_SEARCH_SCORE ?? '0'),
+  },
 });

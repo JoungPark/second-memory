@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import type {
   CreateInternalMemoryRequest,
@@ -26,11 +27,16 @@ interface VectorSearchRow {
 @Injectable()
 export class MemoriesRepository {
   private readonly logger = new Logger(MemoriesRepository.name);
+  private readonly minSearchScore: number;
 
   constructor(
+    private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly embeddingService: EmbeddingService,
-  ) {}
+  ) {
+    const configured = this.configService.get<number>('search.minScore', 0);
+    this.minSearchScore = Math.min(Math.max(configured, 0), 1);
+  }
 
   async create(
     context: RequestContext,
@@ -235,6 +241,7 @@ export class MemoriesRepository {
       INNER JOIN entry_embeddings ee ON ee.entry_id = e.id
       WHERE e.tenant_id = ${context.tenantId}::uuid
         AND e.user_id = ${context.userId}::uuid
+        AND (1 - (ee.embedding <=> ${vectorLiteral}::vector)) >= ${this.minSearchScore}
         ${filterClauses}
       ORDER BY ee.embedding <=> ${vectorLiteral}::vector
       LIMIT ${topK}
@@ -279,7 +286,7 @@ export class MemoriesRepository {
         occurredAt: entry.occurredAt.toISOString(),
         score: this.scoreMemory(entry.content, normalizedQuery),
       }))
-      .filter((result) => result.score > 0)
+      .filter((result) => result.score >= this.minSearchScore)
       .sort((left, right) => right.score - left.score)
       .slice(0, topK);
 
