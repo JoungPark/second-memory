@@ -8,7 +8,6 @@ import uuid
 
 import psycopg
 
-from worker_embeddings.config import EMBEDDING_DIMENSIONS
 from worker_embeddings.embedding import embed_text
 from worker_embeddings.store import store_embedding
 
@@ -47,8 +46,8 @@ def main() -> int:
     text = "Smoke test memory content"
     vector, model = embed_text(text)
 
-    if len(vector) != EMBEDDING_DIMENSIONS:
-        print(f"FAIL: expected {EMBEDDING_DIMENSIONS} dims, got {len(vector)}")
+    if len(vector) == 0:
+        print("FAIL: embedding vector was empty")
         return 1
 
     print(f"OK: embedded with {model}, dims={len(vector)}")

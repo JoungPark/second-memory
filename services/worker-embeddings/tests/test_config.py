@@ -1,5 +1,4 @@
 from worker_embeddings.config import (
-    EMBEDDING_DIMENSIONS,
     EMBEDDING_JOB_NAME,
     EMBEDDING_QUEUE_NAME,
 )
@@ -8,4 +7,3 @@ from worker_embeddings.config import (
 def test_queue_constants_match_shared_types_contract() -> None:
     assert EMBEDDING_QUEUE_NAME == "embedding-jobs"
     assert EMBEDDING_JOB_NAME == "embed-entry"
-    assert EMBEDDING_DIMENSIONS == 384

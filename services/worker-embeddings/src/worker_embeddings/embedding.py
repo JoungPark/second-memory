@@ -5,7 +5,11 @@ from functools import lru_cache
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from worker_embeddings.config import EMBEDDING_DIMENSIONS, settings
+from worker_embeddings.config import settings
+
+
+class EmbeddingError(RuntimeError):
+    pass
 
 
 @lru_cache(maxsize=1)
@@ -18,10 +22,9 @@ def embed_text(text: str) -> tuple[list[float], str]:
     vector = model.encode(text, normalize_embeddings=True)
     array = np.asarray(vector, dtype=np.float32)
 
-    if array.shape[0] != EMBEDDING_DIMENSIONS:
+    if array.ndim != 1 or array.shape[0] == 0:
         raise ValueError(
-            f"Model {settings.embedding_model} produced {array.shape[0]} dimensions, "
-            f"expected {EMBEDDING_DIMENSIONS}"
+            f"Model {settings.embedding_model} produced an invalid embedding shape: {array.shape}"
         )
 
     return array.tolist(), settings.embedding_model

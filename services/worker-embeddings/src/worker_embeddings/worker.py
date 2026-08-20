@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import signal
 from typing import Any
 
 from bullmq import Worker
@@ -23,25 +22,15 @@ async def process_job(job: Any, _job_token: str | None) -> None:
     content = data["content"]
 
     vector, model = embed_text(content)
-    store_embedding(entry_id, vector, model)
-    logger.info("Stored embedding for entry %s using %s", entry_id, model)
+    try:
+        store_embedding(entry_id, vector, model)
+        logger.info("Stored embedding for entry %s using %s", entry_id, model)
+    except Exception as e:
+        logger.error("Error storing embedding for entry %s: %s", entry_id, e)
+        raise e
 
 
-async def run_worker() -> None:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="[EmbeddingWorker] %(levelname)s %(message)s",
-    )
-
-    shutdown_event = asyncio.Event()
-
-    def signal_handler(_signum: int, _frame: Any) -> None:
-        logger.info("Shutdown signal received")
-        shutdown_event.set()
-
-    signal.signal(signal.SIGTERM, signal_handler)
-    signal.signal(signal.SIGINT, signal_handler)
-
+async def run_worker(shutdown_event: asyncio.Event) -> None:
     worker = Worker(
         EMBEDDING_QUEUE_NAME,
         process_job,
