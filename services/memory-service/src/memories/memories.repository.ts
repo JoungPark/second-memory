@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type {
   CreateInternalMemoryRequest,
@@ -10,12 +10,27 @@ import type {
   RequestContext,
   SearchMemoriesRequest,
   SearchMemoriesResponse,
+  SearchMemoryResult,
 } from '@second-memory/shared-types';
 import { PrismaService } from '@second-memory/server-db';
+import { EmbeddingService, EmbeddingUnavailableError } from '../embedding/embedding.service';
+
+interface VectorSearchRow {
+  id: string;
+  entry_type: string;
+  content: string;
+  occurred_at: Date;
+  score: number;
+}
 
 @Injectable()
 export class MemoriesRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(MemoriesRepository.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly embeddingService: EmbeddingService,
+  ) {}
 
   async create(
     context: RequestContext,
@@ -159,12 +174,87 @@ export class MemoriesRepository {
     request: SearchMemoriesRequest,
   ): Promise<SearchMemoriesResponse> {
     const topK = Math.min(Math.max(request.topK ?? 5, 1), 50);
-    const normalizedQuery = request.query.trim().toLowerCase();
+    const normalizedQuery = request.query.trim();
 
     if (!normalizedQuery) {
       return { results: [] };
     }
 
+    try {
+      const queryVector = await this.embeddingService.embedText(normalizedQuery);
+      const vectorResults = await this.searchByVector(context, request, queryVector, topK);
+
+      if (vectorResults.length > 0) {
+        return { results: vectorResults };
+      }
+
+      this.logger.warn(
+        JSON.stringify({
+          event: 'memory_search_fallback',
+          reason: 'no_vector_results',
+          tenantId: context.tenantId,
+          userId: context.userId,
+        }),
+      );
+    } catch (error) {
+      if (error instanceof EmbeddingUnavailableError) {
+        this.logger.warn(
+          JSON.stringify({
+            event: 'memory_search_fallback',
+            reason: 'embedding_unavailable',
+            message: error.message,
+            tenantId: context.tenantId,
+            userId: context.userId,
+          }),
+        );
+      } else {
+        throw error;
+      }
+    }
+
+    return this.searchByKeyword(context, request, topK);
+  }
+
+  private async searchByVector(
+    context: RequestContext,
+    request: SearchMemoriesRequest,
+    queryVector: number[],
+    topK: number,
+  ): Promise<SearchMemoryResult[]> {
+    const vectorLiteral = this.formatVectorLiteral(queryVector);
+    const filterClauses = this.buildVectorFilterClauses(request);
+
+    const rows = await this.prisma.$queryRaw<VectorSearchRow[]>`
+      SELECT
+        e.id,
+        e.entry_type,
+        e.content,
+        e.occurred_at,
+        1 - (ee.embedding <=> ${vectorLiteral}::vector) AS score
+      FROM entries e
+      INNER JOIN entry_embeddings ee ON ee.entry_id = e.id
+      WHERE e.tenant_id = ${context.tenantId}::uuid
+        AND e.user_id = ${context.userId}::uuid
+        ${filterClauses}
+      ORDER BY ee.embedding <=> ${vectorLiteral}::vector
+      LIMIT ${topK}
+    `;
+
+    return rows.map((row) => ({
+      id: row.id,
+      entryType: row.entry_type as EntryType,
+      content: row.content,
+      occurredAt: row.occurred_at.toISOString(),
+      score: Number(row.score),
+    }));
+  }
+
+  private async searchByKeyword(
+    context: RequestContext,
+    request: SearchMemoriesRequest,
+    topK: number,
+  ): Promise<SearchMemoriesResponse> {
+    const normalizedQuery = request.query.trim().toLowerCase();
     const where = this.buildSearchWhere(context, request);
     where.content = {
       contains: normalizedQuery,
@@ -194,6 +284,33 @@ export class MemoriesRepository {
       .slice(0, topK);
 
     return { results };
+  }
+
+  private buildVectorFilterClauses(request: SearchMemoriesRequest): Prisma.Sql {
+    const filters = request.filters;
+    const clauses: Prisma.Sql[] = [];
+
+    if (filters?.entryType) {
+      clauses.push(Prisma.sql`AND e.entry_type = ${filters.entryType}`);
+    }
+
+    if (filters?.from) {
+      clauses.push(Prisma.sql`AND e.occurred_at >= ${new Date(filters.from)}`);
+    }
+
+    if (filters?.to) {
+      clauses.push(Prisma.sql`AND e.occurred_at <= ${new Date(filters.to)}`);
+    }
+
+    if (clauses.length === 0) {
+      return Prisma.empty;
+    }
+
+    return Prisma.join(clauses, ' ');
+  }
+
+  private formatVectorLiteral(vector: number[]): string {
+    return `[${vector.join(',')}]`;
   }
 
   private async findByIdempotencyKey(

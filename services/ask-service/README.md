@@ -106,4 +106,4 @@ curl -X POST http://localhost:3002/v1/ask/messages \
 
 - Ask sessions are stored in memory only and are lost on service restart.
 - Milestone B does not include `POST /v1/ask/end` or client SDK wiring.
-- Memory search quality depends on memory-service retrieval (keyword fallback until vector search is added).
+- Memory search uses vector similarity via memory-service (keyword fallback when embeddings are unavailable or not yet indexed).

@@ -89,7 +89,7 @@ describe('MemoriesService', () => {
     expect(second.id).toBe(first.id);
   });
 
-  it('searches memories by keyword', async () => {
+  it('searches memories via repository search', async () => {
     repository.search.mockResolvedValue({
       results: [
         {

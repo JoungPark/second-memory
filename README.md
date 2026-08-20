@@ -12,7 +12,7 @@ This repository is a pnpm + Turborepo monorepo aligned with the V1 architecture 
 |-----------|--------|-------------|
 | `apps/web` | Done | Next.js web client — auth, self-talk capture, ask UI |
 | `apps/mobile` | Done | Expo mobile client — same flows as web |
-| `services/memory-service` | Done | NestJS memory API — capture, list, search, outbox → BullMQ |
+| `services/memory-service` | Done | NestJS memory API — capture, list, vector search (keyword fallback), outbox → BullMQ |
 | `services/worker-embeddings` | Done | Python BullMQ worker — sentence-transformers → pgvector |
 | `services/ask-service` | Milestone B | NestJS RAG/chat orchestration — `/v1/ask/messages` |
 | `packages/*` | Partial | Shared types, server-db, nest-auth, client SDK, UI hooks |
@@ -123,8 +123,11 @@ Or start it via Docker Compose:
 cd infra/docker && docker compose up -d worker-embeddings
 ```
 
+## Vector Search
+
+Internal memory search (`POST /internal/v1/memories/search`) embeds the query and ranks entries by cosine similarity using pgvector. Point memory-service at the worker embedding server (`EMBEDDING_BASE_URL=http://localhost:8090` by default). If the embedding server is down or entries are not yet embedded, search falls back to keyword matching.
+
 ## Next Steps
 
-1. Add vector search to `memory-service` `searchMemories` (replace keyword fallback).
-2. Implement Milestone C: `POST /v1/ask/end` and client-sdk wiring.
-3. Add shared ESLint and tsconfig presets in `packages/shared-config`.
+1. Implement Milestone C: `POST /v1/ask/end` and client-sdk wiring.
+2. Add shared ESLint and tsconfig presets in `packages/shared-config`.

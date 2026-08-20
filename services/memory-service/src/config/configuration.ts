@@ -13,4 +13,7 @@ export default () => ({
       .map((origin) => origin.trim())
       .filter(Boolean),
   },
+  embedding: {
+    baseUrl: process.env.EMBEDDING_BASE_URL ?? 'http://localhost:8090',
+  },
 });

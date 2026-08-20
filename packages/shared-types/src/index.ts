@@ -110,5 +110,3 @@ export interface EmbeddingJobPayload {
   userId: string;
   content: string;
 }
-
-export const EMBEDDING_DIMENSIONS = 384 as const;
