@@ -1,6 +1,7 @@
-import type { ExpoConfig } from 'expo/config';
+import type { ExpoConfig, ConfigContext } from 'expo/config';
 
-const config: ExpoConfig = {
+const config = ({ config }: ConfigContext): ExpoConfig => ({
+  ...config,
   name: 'Second Memory',
   slug: 'second-memory',
   version: '1.0.0',
@@ -41,6 +42,6 @@ const config: ExpoConfig = {
   web: {
     favicon: './assets/favicon.png',
   },
-};
+});
 
 export default config;
