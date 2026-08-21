@@ -145,6 +145,7 @@ const styles = StyleSheet.create({
   bottomSection: {
     gap: 12,
     paddingTop: 12,
+    paddingBottom: 16,
     borderTopWidth: 1,
     borderTopColor: '#e4e4e7',
   },

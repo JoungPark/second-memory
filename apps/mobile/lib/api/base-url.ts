@@ -32,3 +32,10 @@ export function getMemoryApiBaseUrl(): string {
     'http://localhost:3001',
   );
 }
+
+export function getAskApiBaseUrl(): string {
+  return resolveDevApiUrl(
+    process.env.EXPO_PUBLIC_ASK_API_URL,
+    'http://localhost:3002',
+  );
+}

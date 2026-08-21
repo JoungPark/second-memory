@@ -1,7 +1,7 @@
-import { AuthProvider as SharedAuthProvider, MemoryApiProvider } from '@second-memory/ui';
+import { AskApiProvider, AuthProvider as SharedAuthProvider, MemoryApiProvider } from '@second-memory/ui';
 import { useEffect, type ReactNode } from 'react';
 
-import { getMemoryApiBaseUrl } from '@/lib/api/base-url';
+import { getAskApiBaseUrl, getMemoryApiBaseUrl } from '@/lib/api/base-url';
 import { getFirebaseAuth } from '@/lib/firebase/client';
 import {
   configureGoogleSignIn,
@@ -19,7 +19,9 @@ export function MobileAuthProvider({ children }: MobileAuthProviderProps) {
 
   return (
     <SharedAuthProvider getAuth={getFirebaseAuth} signIn={signInWithGoogle}>
-      <MemoryApiProvider baseUrl={getMemoryApiBaseUrl()}>{children}</MemoryApiProvider>
+      <MemoryApiProvider baseUrl={getMemoryApiBaseUrl()}>
+        <AskApiProvider baseUrl={getAskApiBaseUrl()}>{children}</AskApiProvider>
+      </MemoryApiProvider>
     </SharedAuthProvider>
   );
 }

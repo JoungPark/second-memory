@@ -1,4 +1,6 @@
 import type {
+  AskMessageRequest,
+  AskMessageResponse,
   CreateMemoryRequest,
   CreateMemoryResponse,
   ListMemoriesQuery,
@@ -69,6 +71,59 @@ export class MemoryApiClient {
       const message = await response.text();
       throw new Error(
         `Memory API request failed (${response.status} ${response.statusText}): ${message}`,
+      );
+    }
+
+    return response;
+  }
+}
+
+export interface AskApiClientOptions {
+  baseUrl: string;
+  getIdToken: GetIdToken;
+}
+
+export class AskApiClient {
+  private readonly baseUrl: string;
+  private readonly getIdToken: GetIdToken;
+
+  constructor(options: AskApiClientOptions) {
+    this.baseUrl = options.baseUrl.replace(/\/$/, '');
+    this.getIdToken = options.getIdToken;
+  }
+
+  async sendMessage(body: AskMessageRequest): Promise<AskMessageResponse> {
+    const response = await this.request('/v1/ask/messages', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+
+    return response.json() as Promise<AskMessageResponse>;
+  }
+
+  private async request(path: string, init: RequestInit): Promise<Response> {
+    const token = await this.getIdToken();
+
+    if (!token) {
+      throw new Error('Not authenticated. Sign in to obtain a Firebase ID token.');
+    }
+
+    const headers = new Headers(init.headers);
+    headers.set('Authorization', `Bearer ${token}`);
+
+    if (init.body && !headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      ...init,
+      headers,
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(
+        `Ask API request failed (${response.status} ${response.statusText}): ${message}`,
       );
     }
 
