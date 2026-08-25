@@ -6,7 +6,9 @@ describe('EmbeddingService', () => {
     const configService = {
       get: jest.fn((key: string, defaultValue?: unknown) => {
         const config: Record<string, unknown> = {
-          'embedding.baseUrl': 'http://localhost:8090',
+          'embedding.baseUrl': 'http://localhost:8090/v1',
+          'embedding.apiKey': 'test-key',
+          'embedding.model': 'sentence-transformers/all-MiniLM-L6-v2',
           ...overrides,
         };
 
@@ -27,7 +29,7 @@ describe('EmbeddingService', () => {
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
-        embedding: rawVector,
+        data: [{ embedding: rawVector }],
       }),
     } as Response);
 
@@ -38,12 +40,38 @@ describe('EmbeddingService', () => {
     expect(vector[0]).toBeCloseTo(1, 5);
     expect(vector.slice(1).every((value) => value === 0)).toBe(true);
     expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:8090/embed',
+      'http://localhost:8090/v1/embeddings',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({
-          text: 'What did I write about travel?',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer test-key',
+          'Content-Type': 'application/json',
         }),
+        body: JSON.stringify({
+          input: 'What did I write about travel?',
+          model: 'sentence-transformers/all-MiniLM-L6-v2',
+        }),
+      }),
+    );
+  });
+
+  it('omits Authorization when apiKey is not configured', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: [{ embedding: [1, 0] }],
+      }),
+    } as Response);
+
+    const service = createService({ 'embedding.apiKey': '' });
+    await service.embedText('hello');
+
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost:8090/v1/embeddings',
+      expect.objectContaining({
+        headers: {
+          'Content-Type': 'application/json',
+        },
       }),
     );
   });
@@ -56,7 +84,22 @@ describe('EmbeddingService', () => {
     await expect(service.embedText('hello')).rejects.toThrow(EmbeddingUnavailableError);
   });
 
-  it('throws EmbeddingUnavailableError when the service returns an error', async () => {
+  it('throws EmbeddingUnavailableError when the service returns an OpenAI error', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 503,
+      statusText: 'Service Unavailable',
+      json: async () => ({
+        error: { message: 'model unavailable' },
+      }),
+    } as Response);
+
+    const service = createService();
+
+    await expect(service.embedText('hello')).rejects.toThrow(EmbeddingUnavailableError);
+  });
+
+  it('throws EmbeddingUnavailableError when the service returns a legacy error', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: false,
       status: 503,
@@ -74,7 +117,9 @@ describe('EmbeddingService', () => {
   it('throws EmbeddingUnavailableError when the response has no embedding', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
-      json: async () => ({}),
+      json: async () => ({
+        data: [{}],
+      }),
     } as Response);
 
     const service = createService();

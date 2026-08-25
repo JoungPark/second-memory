@@ -14,7 +14,9 @@ export default () => ({
       .filter(Boolean),
   },
   embedding: {
-    baseUrl: process.env.EMBEDDING_BASE_URL ?? 'http://localhost:8090',
+    baseUrl: process.env.EMBEDDING_BASE_URL ?? 'http://localhost:8090/v1',
+    apiKey: process.env.EMBEDDING_API_KEY ?? '',
+    model: process.env.EMBEDDING_MODEL ?? 'sentence-transformers/all-MiniLM-L6-v2',
   },
   search: {
     minScore: parseFloat(process.env.MIN_SEARCH_SCORE ?? '0'),

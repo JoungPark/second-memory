@@ -53,14 +53,59 @@ Keep in sync with `packages/shared-types/src/index.ts`:
 Point memory-service at the worker HTTP server:
 
 ```env
-EMBEDDING_BASE_URL=http://localhost:8090
+EMBEDDING_BASE_URL=http://localhost:8090/v1
 ```
 
 When changing models, update the PostgreSQL `entry_embeddings.embedding` column to match the model output size and re-embed existing vectors.
 
-## Internal HTTP API
+## HTTP API
 
-`POST /embed`
+### OpenAI-compatible embeddings
+
+`POST /v1/embeddings`
+
+Request:
+
+```json
+{
+  "input": "hello",
+  "model": "sentence-transformers/all-MiniLM-L6-v2"
+}
+```
+
+Batch input is supported via `"input": ["hello", "world"]`.
+
+Response:
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "object": "embedding",
+      "index": 0,
+      "embedding": [0.1, 0.2, "..."]
+    }
+  ],
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "usage": {
+    "prompt_tokens": 1,
+    "total_tokens": 1
+  }
+}
+```
+
+Example:
+
+```bash
+curl -s http://localhost:8090/v1/embeddings \
+  -H 'Content-Type: application/json' \
+  -d '{"input":"hello","model":"sentence-transformers/all-MiniLM-L6-v2"}'
+```
+
+### Legacy internal API
+
+`POST /embed` (legacy shim)
 
 Request:
 

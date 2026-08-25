@@ -125,7 +125,7 @@ cd infra/docker && docker compose up -d worker-embeddings
 
 ## Vector Search
 
-Internal memory search (`POST /internal/v1/memories/search`) embeds the query and ranks entries by cosine similarity using pgvector. Point memory-service at the worker embedding server (`EMBEDDING_BASE_URL=http://localhost:8090` by default). If the embedding server is down or entries are not yet embedded, search falls back to keyword matching.
+Internal memory search (`POST /internal/v1/memories/search`) embeds the query and ranks entries by cosine similarity using pgvector. Point memory-service at the worker embedding server (`EMBEDDING_BASE_URL=http://localhost:8090/v1` by default) or an external OpenAI-compatible provider via `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, and `EMBEDDING_MODEL`. External providers require matching pgvector dimensions and re-embedding stored entries. If the embedding server is down or entries are not yet embedded, search falls back to keyword matching.
 
 ## Next Steps
 

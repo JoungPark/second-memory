@@ -1,8 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-interface EmbedResponse {
+interface EmbeddingObject {
   embedding?: number[];
+}
+
+interface OpenAiEmbeddingResponse {
+  data?: EmbeddingObject[];
+  error?: {
+    message?: string;
+  };
   detail?: string;
 }
 
@@ -17,23 +24,39 @@ export class EmbeddingUnavailableError extends Error {
 export class EmbeddingService {
   private readonly logger = new Logger(EmbeddingService.name);
   private readonly baseUrl: string;
+  private readonly apiKey: string;
+  private readonly model: string;
 
   constructor(private readonly configService: ConfigService) {
     this.baseUrl = this.configService
-      .get<string>('embedding.baseUrl', 'http://localhost:8090')
+      .get<string>('embedding.baseUrl', 'http://localhost:8090/v1')
       .replace(/\/$/, '');
+    this.apiKey = this.configService.get<string>('embedding.apiKey', '');
+    this.model = this.configService.get<string>(
+      'embedding.model',
+      'sentence-transformers/all-MiniLM-L6-v2',
+    );
   }
 
   async embedText(text: string): Promise<number[]> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (this.apiKey) {
+      headers.Authorization = `Bearer ${this.apiKey}`;
+    }
+
     let response: Response;
 
     try {
-      response = await fetch(`${this.baseUrl}/embed`, {
+      response = await fetch(`${this.baseUrl}/embeddings`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text }),
+        headers,
+        body: JSON.stringify({
+          input: text,
+          model: this.model,
+        }),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -42,10 +65,10 @@ export class EmbeddingService {
       );
     }
 
-    let payload: EmbedResponse;
+    let payload: OpenAiEmbeddingResponse;
 
     try {
-      payload = (await response.json()) as EmbedResponse;
+      payload = (await response.json()) as OpenAiEmbeddingResponse;
     } catch {
       throw new EmbeddingUnavailableError(
         `Embedding service returned non-JSON response (${response.status})`,
@@ -53,11 +76,14 @@ export class EmbeddingService {
     }
 
     if (!response.ok) {
-      const message = payload.detail ?? response.statusText;
-      throw new EmbeddingUnavailableError(`Embedding request failed (${response.status}): ${message}`);
+      const message =
+        payload.error?.message ?? payload.detail ?? response.statusText;
+      throw new EmbeddingUnavailableError(
+        `Embedding request failed (${response.status}): ${message}`,
+      );
     }
 
-    const embedding = payload.embedding;
+    const embedding = payload.data?.[0]?.embedding;
 
     if (!embedding) {
       throw new EmbeddingUnavailableError('Embedding response did not include a vector');
@@ -68,6 +94,7 @@ export class EmbeddingService {
     this.logger.debug(
       JSON.stringify({
         event: 'query_embedding',
+        model: this.model,
         dimensions: normalized.length,
       }),
     );
