@@ -1,3 +1,17 @@
+export type EmbeddingStorageMode = 'worker' | 'inline';
+
+function parseEmbeddingStorageMode(value: string | undefined): EmbeddingStorageMode {
+  const mode = value ?? 'worker';
+
+  if (mode !== 'worker' && mode !== 'inline') {
+    throw new Error(
+      `Invalid EMBEDDING_STORAGE_MODE: "${mode}". Must be "worker" or "inline".`,
+    );
+  }
+
+  return mode;
+}
+
 export default () => ({
   port: parseInt(process.env.PORT ?? '3001', 10),
   databaseUrl:
@@ -17,6 +31,7 @@ export default () => ({
     baseUrl: process.env.EMBEDDING_BASE_URL ?? 'http://localhost:8090/v1',
     apiKey: process.env.EMBEDDING_API_KEY ?? '',
     model: process.env.EMBEDDING_MODEL ?? 'sentence-transformers/all-MiniLM-L6-v2',
+    storageMode: parseEmbeddingStorageMode(process.env.EMBEDDING_STORAGE_MODE),
   },
   search: {
     minScore: parseFloat(process.env.MIN_SEARCH_SCORE ?? '0'),

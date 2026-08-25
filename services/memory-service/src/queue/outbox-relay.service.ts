@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { EmbeddingJobPayload } from '@second-memory/shared-types';
 import { PrismaService } from '@second-memory/server-db';
 import { EmbeddingQueueService } from './embedding-queue.service';
@@ -13,11 +14,16 @@ export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
   private relayTimer?: NodeJS.Timeout;
 
   constructor(
+    private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly embeddingQueue: EmbeddingQueueService,
   ) {}
 
   onModuleInit(): void {
+    if (this.configService.get<string>('embedding.storageMode', 'worker') === 'inline') {
+      return;
+    }
+
     this.relayTimer = setInterval(() => {
       void this.relayPendingEvents();
     }, RELAY_INTERVAL_MS);

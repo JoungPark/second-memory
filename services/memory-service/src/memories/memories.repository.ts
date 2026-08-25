@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import type {
@@ -14,7 +14,7 @@ import type {
   SearchMemoryResult,
 } from '@second-memory/shared-types';
 import { PrismaService } from '@second-memory/server-db';
-import { EmbeddingService, EmbeddingUnavailableError } from '../embedding/embedding.service';
+import { EntryEmbeddingStore } from '../embedding/entry-embedding.store';
 
 interface VectorSearchRow {
   id: string;
@@ -26,13 +26,12 @@ interface VectorSearchRow {
 
 @Injectable()
 export class MemoriesRepository {
-  private readonly logger = new Logger(MemoriesRepository.name);
   private readonly minSearchScore: number;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
-    private readonly embeddingService: EmbeddingService,
+    private readonly entryEmbeddingStore: EntryEmbeddingStore,
   ) {
     const configured = this.configService.get<number>('search.minScore', 0);
     this.minSearchScore = Math.min(Math.max(configured, 0), 1);
@@ -41,6 +40,7 @@ export class MemoriesRepository {
   async create(
     context: RequestContext,
     request: CreateMemoryRequest | CreateInternalMemoryRequest,
+    embedding?: { vector: number[]; model: string },
   ): Promise<CreateMemoryResponse> {
     if (request.idempotencyKey) {
       const existing = await this.findByIdempotencyKey(context, request.idempotencyKey);
@@ -73,18 +73,27 @@ export class MemoriesRepository {
           await this.attachTags(tx, context.tenantId, created.id, tags);
         }
 
-        await tx.outboxEvent.create({
-          data: {
-            aggregateId: created.id,
-            eventType: 'entry.created',
-            payload: {
-              entryId: created.id,
-              tenantId: context.tenantId,
-              userId: context.userId,
-              content: created.content,
+        if (embedding) {
+          await this.entryEmbeddingStore.store(
+            tx,
+            created.id,
+            embedding.vector,
+            embedding.model,
+          );
+        } else {
+          await tx.outboxEvent.create({
+            data: {
+              aggregateId: created.id,
+              eventType: 'entry.created',
+              payload: {
+                entryId: created.id,
+                tenantId: context.tenantId,
+                userId: context.userId,
+                content: created.content,
+              },
             },
-          },
-        });
+          });
+        }
 
         return created;
       });
@@ -175,58 +184,12 @@ export class MemoriesRepository {
     };
   }
 
-  async search(
-    context: RequestContext,
-    request: SearchMemoriesRequest,
-  ): Promise<SearchMemoriesResponse> {
-    const topK = Math.min(Math.max(request.topK ?? 5, 1), 50);
-    const normalizedQuery = request.query.trim();
-
-    if (!normalizedQuery) {
-      return { results: [] };
-    }
-
-    try {
-      const queryVector = await this.embeddingService.embedText(normalizedQuery);
-      const vectorResults = await this.searchByVector(context, request, queryVector, topK);
-
-      if (vectorResults.length > 0) {
-        return { results: vectorResults };
-      }
-
-      this.logger.warn(
-        JSON.stringify({
-          event: 'memory_search_fallback',
-          reason: 'no_vector_results',
-          tenantId: context.tenantId,
-          userId: context.userId,
-        }),
-      );
-    } catch (error) {
-      if (error instanceof EmbeddingUnavailableError) {
-        this.logger.warn(
-          JSON.stringify({
-            event: 'memory_search_fallback',
-            reason: 'embedding_unavailable',
-            message: error.message,
-            tenantId: context.tenantId,
-            userId: context.userId,
-          }),
-        );
-      } else {
-        throw error;
-      }
-    }
-
-    return this.searchByKeyword(context, request, topK);
-  }
-
-  private async searchByVector(
+  async searchByVector(
     context: RequestContext,
     request: SearchMemoriesRequest,
     queryVector: number[],
-    topK: number,
   ): Promise<SearchMemoryResult[]> {
+    const topK = Math.min(Math.max(request.topK ?? 5, 1), 50);
     const vectorLiteral = this.formatVectorLiteral(queryVector);
     const filterClauses = this.buildVectorFilterClauses(request);
 
@@ -256,11 +219,11 @@ export class MemoriesRepository {
     }));
   }
 
-  private async searchByKeyword(
+  async searchByKeyword(
     context: RequestContext,
     request: SearchMemoriesRequest,
-    topK: number,
   ): Promise<SearchMemoriesResponse> {
+    const topK = Math.min(Math.max(request.topK ?? 5, 1), 50);
     const normalizedQuery = request.query.trim().toLowerCase();
     const where = this.buildSearchWhere(context, request);
     where.content = {
@@ -320,7 +283,7 @@ export class MemoriesRepository {
     return `[${vector.join(',')}]`;
   }
 
-  private async findByIdempotencyKey(
+  async findByIdempotencyKey(
     context: RequestContext,
     idempotencyKey: string,
   ): Promise<CreateMemoryResponse | undefined> {
