@@ -119,7 +119,6 @@ export class MemoriesService {
     context: RequestContext,
     request: CreateMemoryRequest | CreateInternalMemoryRequest,
   ): Promise<CreateMemoryResponse> {
-    console.log('create', this.storageMode);
     if (this.storageMode === 'inline') {
       return this.createInline(context, request);
     }
