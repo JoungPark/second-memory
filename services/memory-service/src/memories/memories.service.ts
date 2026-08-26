@@ -32,11 +32,11 @@ export class MemoriesService {
   ) {
     this.storageMode = this.configService.get<EmbeddingStorageMode>(
       'embedding.storageMode',
-      'worker',
+      'inline',
     );
     this.embeddingModel = this.configService.get<string>(
       'embedding.model',
-      'sentence-transformers/all-MiniLM-L6-v2',
+      'text-embedding-3-small',
     );
   }
 

@@ -87,7 +87,7 @@ model OutboxEvent {
 
 model EntryEmbedding {
   entryId    String                      @id @map("entry_id") @db.Uuid
-  embedding  Unsupported("vector(384)")?
+  embedding  Unsupported("vector(1536)")?
   model      String
   embeddedAt DateTime                    @default(now()) @map("embedded_at") @db.Timestamptz(6)
   entry      Entry                       @relation(fields: [entryId], references: [id], onDelete: Cascade)

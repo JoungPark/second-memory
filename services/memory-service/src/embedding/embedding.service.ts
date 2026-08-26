@@ -29,12 +29,12 @@ export class EmbeddingService {
 
   constructor(private readonly configService: ConfigService) {
     this.baseUrl = this.configService
-      .get<string>('embedding.baseUrl', 'http://localhost:8090/v1')
+      .get<string>('embedding.baseUrl', 'https://api.openai.com/v1')
       .replace(/\/$/, '');
     this.apiKey = this.configService.get<string>('embedding.apiKey', '');
     this.model = this.configService.get<string>(
       'embedding.model',
-      'sentence-transformers/all-MiniLM-L6-v2',
+      'text-embedding-3-small',
     );
   }
 

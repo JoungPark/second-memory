@@ -137,7 +137,7 @@ describe('MemoryService (e2e)', () => {
 
 describe('MemoryService inline storage mode (e2e)', () => {
   let app: INestApplication;
-  const inlineVector = Array.from({ length: 384 }, (_, index) => (index === 0 ? 1 : 0));
+  const inlineVector = Array.from({ length: 1536 }, (_, index) => (index === 0 ? 1 : 0));
 
   beforeEach(async () => {
     process.env.EMBEDDING_STORAGE_MODE = 'inline';

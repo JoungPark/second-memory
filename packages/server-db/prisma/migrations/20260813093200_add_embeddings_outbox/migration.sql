@@ -13,7 +13,7 @@ CREATE TABLE "outbox_events" (
 -- CreateTable
 CREATE TABLE "entry_embeddings" (
     "entry_id" UUID NOT NULL,
-    "embedding" vector(384) NOT NULL,
+    "embedding" vector(1536) NOT NULL,
     "model" TEXT NOT NULL,
     "embedded_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

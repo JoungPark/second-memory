@@ -1,7 +1,7 @@
 export type EmbeddingStorageMode = 'worker' | 'inline';
 
 function parseEmbeddingStorageMode(value: string | undefined): EmbeddingStorageMode {
-  const mode = value ?? 'worker';
+  const mode = value ?? 'inline';
 
   if (mode !== 'worker' && mode !== 'inline') {
     throw new Error(
@@ -28,9 +28,9 @@ export default () => ({
       .filter(Boolean),
   },
   embedding: {
-    baseUrl: process.env.EMBEDDING_BASE_URL ?? 'http://localhost:8090/v1',
+    baseUrl: process.env.EMBEDDING_BASE_URL ?? 'https://api.openai.com/v1',
     apiKey: process.env.EMBEDDING_API_KEY ?? '',
-    model: process.env.EMBEDDING_MODEL ?? 'sentence-transformers/all-MiniLM-L6-v2',
+    model: process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small',
     storageMode: parseEmbeddingStorageMode(process.env.EMBEDDING_STORAGE_MODE),
   },
   search: {

@@ -20,7 +20,7 @@ export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit(): void {
-    if (this.configService.get<string>('embedding.storageMode', 'worker') === 'inline') {
+    if (this.configService.get<string>('embedding.storageMode', 'inline') === 'inline') {
       return;
     }
 
