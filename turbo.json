@@ -12,6 +12,9 @@
       "dependsOn": ["^test"],
       "outputs": ["coverage/**"]
     },
+    "start": {
+      "dependsOn": ["^start"]
+    },
     "dev": {
       "cache": false,
       "persistent": true
