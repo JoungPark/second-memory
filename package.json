@@ -5,6 +5,8 @@
   "packageManager": "pnpm@9.12.0",
   "scripts": {
     "dev": "turbo run dev --parallel --ui=tui --filter=!@second-memory/worker-embeddings",
+    "memory-service:start": "turbo run start --filter=@second-memory/memory-service",
+    "ask-service:start": "turbo run start --filter=@second-memory/ask-service",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "format": "prettier --write .",
