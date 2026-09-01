@@ -3,6 +3,7 @@ import type { AppMode } from '@second-memory/ui';
 import { useAuth } from '@second-memory/ui';
 import type { User } from 'firebase/auth';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AskScreen } from '@/components/AskScreen';
 import { ModeSwitch } from '@/components/ModeSwitch';
@@ -24,7 +25,7 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Second Memory</Text>
       <View style={styles.header}>
         <Text style={styles.userName}>{displayName}</Text>
@@ -38,7 +39,7 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
       <View style={styles.content}>
         {mode === 'self-talk' ? <SelfTalkScreen /> : <AskScreen />}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

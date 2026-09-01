@@ -173,6 +173,7 @@ pnpm exec eas build --profile production --platform all
 
 # Dev client build
 pnpm exec eas build --profile development --platform ios
+pnpm exec eas build --profile development --platform android
 ```
 
 From the repo root:
