@@ -91,6 +91,119 @@ Notes:
 - If install fails because the app is already installed, use `adb install -r app/build/outputs/apk/release/app-release.apk`.
 - For day-to-day dev, prefer `pnpm --filter @second-memory/mobile android` (debug build + Metro).
 
+## EAS Build (cloud)
+
+Build and distribute the app with [Expo Application Services (EAS)](https://docs.expo.dev/eas/). Run all `eas` commands from `apps/mobile`.
+
+### Prerequisites
+
+- An [Expo account](https://expo.dev/signup)
+- `eas-cli` (use via `pnpm exec eas` — no global install required)
+
+This project is already linked to EAS (`extra.eas.projectId` in `app.config.ts`).
+
+### One-time setup
+
+1. **Log in to Expo**
+
+   ```bash
+   cd apps/mobile
+   pnpm exec eas login
+   ```
+
+2. **Place Firebase config files locally** (for uploading to EAS — not committed to git):
+
+   ```text
+   apps/mobile/google-services.json
+   apps/mobile/GoogleService-Info.plist
+   ```
+
+3. **Upload Firebase files as EAS file environment variables**
+
+   EAS Build only uploads git-tracked files. Because these are gitignored, upload them as secrets instead. `app.config.ts` reads them via `GOOGLE_SERVICES_JSON` and `GOOGLE_SERVICES_PLIST` at build time.
+
+   ```bash
+   pnpm exec eas env:create --environment preview --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json
+   pnpm exec eas env:create --environment preview --name GOOGLE_SERVICES_PLIST --type file --value ./GoogleService-Info.plist
+   pnpm exec eas env:create --environment production --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json
+   pnpm exec eas env:create --environment production --name GOOGLE_SERVICES_PLIST --type file --value ./GoogleService-Info.plist
+   ```
+
+4. **Set environment variables for each EAS environment**
+
+   Cloud builds cannot reach `localhost`. Set your deployed API URLs and Firebase/OAuth values for `preview` and `production`:
+
+   ```bash
+   pnpm exec eas env:create --environment production --name EXPO_PUBLIC_MEMORY_API_URL --value https://your-memory-api.example.com
+   pnpm exec eas env:create --environment production --name EXPO_PUBLIC_ASK_API_URL --value https://your-ask-api.example.com
+   # Repeat for all EXPO_PUBLIC_* vars listed in .env.example
+   ```
+
+   List configured variables: `pnpm exec eas env:list`
+
+5. **Configure signing credentials** (prompted automatically on first build, or run manually):
+
+   ```bash
+   pnpm exec eas credentials
+   ```
+
+### Build profiles
+
+Profiles are defined in `eas.json`:
+
+| Profile       | Use case                                     | Distribution |
+| ------------- | -------------------------------------------- | ------------ |
+| `development` | Dev client for internal testing              | internal     |
+| `preview`     | Install on physical devices (TestFlight-like) | internal     |
+| `production`  | App Store / Play Store submission            | store        |
+
+### Run a build
+
+From `apps/mobile`:
+
+```bash
+# Internal test build — good first smoke test (APK on Android)
+pnpm exec eas build --profile preview --platform android
+
+# iOS internal build
+pnpm exec eas build --profile preview --platform ios
+
+# Store-ready build (AAB on Android, IPA on iOS)
+pnpm exec eas build --profile production --platform all
+
+# Dev client build
+pnpm exec eas build --profile development --platform ios
+```
+
+From the repo root:
+
+```bash
+pnpm --filter @second-memory/mobile exec eas build --profile preview --platform android
+```
+
+Monitor builds at [expo.dev](https://expo.dev) or with:
+
+```bash
+pnpm exec eas build:list
+```
+
+When a build finishes, EAS provides a download link (or QR code for internal installs).
+
+### Submit to stores
+
+After a successful `production` build:
+
+```bash
+pnpm exec eas submit --profile production --platform ios
+pnpm exec eas submit --profile production --platform android
+```
+
+### Monorepo notes
+
+- `eas.json` lives in `apps/mobile/` — always run EAS commands from that directory.
+- Keep `pnpm-lock.yaml` and `pnpm-workspace.yaml` committed at the repo root; EAS uses them to detect the pnpm monorepo and install workspace dependencies (`@second-memory/ui`, etc.).
+- Local `.env` is not uploaded to EAS. Use `eas env:create` or `eas env:pull` for cloud build variables.
+
 ## Scripts
 
 | Script    | Description                                      |
@@ -104,6 +217,15 @@ Notes:
 | `lint`    | Run ESLint                                       |
 | `test`    | Placeholder (Expo test setup not yet added)    |
 
+EAS commands (run from `apps/mobile`):
+
+| Command | Description |
+| ------- | ----------- |
+| `pnpm exec eas build --profile preview --platform android` | Internal Android build |
+| `pnpm exec eas build --profile production --platform all` | Store-ready build |
+| `pnpm exec eas submit --profile production --platform ios` | Submit to App Store |
+| `pnpm exec eas build:list` | List recent builds |
+
 ## Environment Variables
 
 All public config uses the `EXPO_PUBLIC_` prefix (see `.env.example`):
@@ -114,6 +236,10 @@ All public config uses the `EXPO_PUBLIC_` prefix (see `.env.example`):
 | `EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID`  | Google OAuth web client ID for Firebase Auth |
 | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`    | Google OAuth iOS client ID                   |
 | `EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME`   | Reversed iOS URL scheme for Google Sign-In   |
+| `EXPO_PUBLIC_MEMORY_API_URL`          | Memory service base URL                      |
+| `EXPO_PUBLIC_ASK_API_URL`             | Ask service base URL                         |
+
+For EAS cloud builds, set these via `eas env:create` (see [EAS Build](#eas-build-cloud)). For local dev, use `apps/mobile/.env`.
 
 Do not commit `.env` or Firebase service files with real credentials.
 
@@ -133,6 +259,8 @@ Shared auth UI and providers live in `@second-memory/ui`. Mobile wires platform-
 ## Learn More
 
 - [Expo documentation](https://docs.expo.dev/)
+- [EAS Build](https://docs.expo.dev/build/introduction/)
+- [EAS environment variables](https://docs.expo.dev/eas/environment-variables/)
 - [Expo dev client](https://docs.expo.dev/develop/development-builds/introduction/)
 - [React Native Google Sign-In](https://react-native-google-signin.github.io/docs/)
 - Monorepo layout: [`docs/architecture/v1-monorepo-structure.md`](../../docs/architecture/v1-monorepo-structure.md)

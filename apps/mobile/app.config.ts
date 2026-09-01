@@ -8,6 +8,11 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
+  extra: {
+    eas: {
+      projectId: "7c947c69-771f-42b2-a29c-43fb1bd02aec"
+    },
+  },
   plugins: [
     'expo-dev-client',
     [
@@ -27,12 +32,12 @@ const config = ({ config }: ConfigContext): ExpoConfig => ({
   ],
   ios: {
     bundleIdentifier: 'com.secondmemory.mobile',
-    googleServicesFile: './GoogleService-Info.plist',
+    googleServicesFile: process.env.GOOGLE_SERVICES_PLIST ?? './GoogleService-Info.plist',
     supportsTablet: true,
   },
   android: {
     package: 'com.secondmemory.mobile',
-    googleServicesFile: './google-services.json',
+    googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#ffffff',
