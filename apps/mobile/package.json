@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "main": "index.ts",
   "scripts": {
+    "postinstall": "cd ../.. && pnpm build:packages",
     "dev": "expo start --dev-client",
     "start": "expo start --dev-client",
     "android": "expo run:android",
