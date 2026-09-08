@@ -16,6 +16,7 @@
   "dependencies": {
     "@react-native-async-storage/async-storage": "3.1.1",
     "@react-native-google-signin/google-signin": "^16.1.4",
+    "@second-memory/client-sdk": "workspace:*",
     "@second-memory/ui": "workspace:*",
     "expo": "~57.0.11",
     "expo-dev-client": "^57.0.10",
