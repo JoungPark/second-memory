@@ -2,6 +2,7 @@ import { useMemoryApi, useRecentMemories } from '@second-memory/ui';
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,6 +10,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { KeyboardAwareScreen } from '@/components/KeyboardAwareScreen';
+import { useKeyboardBottomInset } from '@/lib/useKeyboardBottomInset';
 
 export function SelfTalkScreen() {
   const memoryApi = useMemoryApi();
@@ -16,6 +21,12 @@ export function SelfTalkScreen() {
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
+  const keyboardBottomInset = useKeyboardBottomInset();
+  const bottomPadding =
+    Platform.OS === 'android'
+      ? 16 + keyboardBottomInset
+      : Math.max(insets.bottom, 16);
 
   async function handleSend() {
     const trimmed = text.trim();
@@ -43,7 +54,7 @@ export function SelfTalkScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAwareScreen>
       <View style={styles.topSection}>
         {!recent.visible ? (
           <Pressable style={styles.toggleButton} onPress={() => void recent.show()}>
@@ -104,7 +115,7 @@ export function SelfTalkScreen() {
         ) : null}
       </View>
 
-      <View style={styles.bottomSection}>
+      <View style={[styles.bottomSection, { paddingBottom: bottomPadding }]}>
         <TextInput
           value={text}
           onChangeText={setText}
@@ -128,7 +139,7 @@ export function SelfTalkScreen() {
           </Pressable>
         </View>
       </View>
-    </View>
+    </KeyboardAwareScreen>
   );
 }
 
@@ -145,7 +156,6 @@ const styles = StyleSheet.create({
   bottomSection: {
     gap: 12,
     paddingTop: 12,
-    paddingBottom: 16,
     borderTopWidth: 1,
     borderTopColor: '#e4e4e7',
   },

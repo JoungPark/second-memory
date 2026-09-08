@@ -2,12 +2,17 @@ import { useAskChat, type ChatMessage } from '@second-memory/ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { KeyboardAwareScreen } from '@/components/KeyboardAwareScreen';
+import { useKeyboardBottomInset } from '@/lib/useKeyboardBottomInset';
 
 function AssistantMessageMeta({ message }: { message: ChatMessage }) {
   if (message.role !== 'assistant') {
@@ -41,6 +46,12 @@ export function AskScreen() {
   const { messages, sendMessage, submitting, error } = useAskChat();
   const [text, setText] = useState('');
   const listRef = useRef<FlatList<ChatMessage>>(null);
+  const insets = useSafeAreaInsets();
+  const keyboardBottomInset = useKeyboardBottomInset();
+  const bottomPadding =
+    Platform.OS === 'android'
+      ? 16 + keyboardBottomInset
+      : Math.max(insets.bottom, 16);
 
   const scrollToLatest = useCallback((animated = true) => {
     if (messages.length === 0) {
@@ -67,7 +78,7 @@ export function AskScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAwareScreen>
       <View style={styles.messagesSection}>
         <FlatList
           ref={listRef}
@@ -119,7 +130,7 @@ export function AskScreen() {
         />
       </View>
 
-      <View style={styles.bottomSection}>
+      <View style={[styles.bottomSection, { paddingBottom: bottomPadding }]}>
         <View style={styles.inputRow}>
           <TextInput
             value={text}
@@ -146,7 +157,7 @@ export function AskScreen() {
         </View>
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </View>
-    </View>
+    </KeyboardAwareScreen>
   );
 }
 
@@ -237,7 +248,6 @@ const styles = StyleSheet.create({
   bottomSection: {
     gap: 8,
     paddingTop: 12,
-    paddingBottom: 16,
     borderTopWidth: 1,
     borderTopColor: '#e4e4e7',
   },
