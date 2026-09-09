@@ -1,14 +1,19 @@
 import { useState } from 'react';
-import type { AppMode } from '@second-memory/ui';
-import { useAuth } from '@second-memory/ui';
+import {
+  BackendHealthProvider,
+  type AppMode,
+  useAuth,
+} from '@second-memory/ui';
 import type { User } from 'firebase/auth';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AskScreen } from '@/components/AskScreen';
+import { BackendHealthStatus } from '@/components/BackendHealthStatus';
 import { ModeSwitch } from '@/components/ModeSwitch';
 import { SelfTalkScreen } from '@/components/SelfTalkScreen';
 import { SettingsScreen } from '@/components/settings/SettingsScreen';
+import { wakeBackendServices } from '@/lib/api/wake-backend';
 import { signOutGoogle } from '@/lib/firebase/sign-in';
 
 type AuthenticatedScreen = 'main' | 'settings';
@@ -28,35 +33,41 @@ export function AuthenticatedView({ user }: AuthenticatedViewProps) {
     await signOutUser();
   }
 
-  if (screen === 'settings') {
-    return (
-      <SafeAreaView style={styles.container}>
-        <SettingsScreen user={user} onBack={() => setScreen('main')} />
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Second Memory</Text>
-      <View style={styles.header}>
-        <Text style={styles.userName}>{displayName}</Text>
-        <View style={styles.headerActions}>
-          <Pressable style={styles.headerButton} onPress={() => setScreen('settings')}>
-            <Text style={styles.headerButtonText}>Settings</Text>
-          </Pressable>
-          <Pressable style={styles.headerButton} onPress={() => void handleSignOut()}>
-            <Text style={styles.headerButtonText}>Sign out</Text>
-          </Pressable>
-        </View>
-      </View>
+    <BackendHealthProvider checkHealth={wakeBackendServices}>
+      {screen === 'settings' ? (
+        <SafeAreaView style={styles.container}>
+          <SettingsScreen user={user} onBack={() => setScreen('main')} />
+        </SafeAreaView>
+      ) : (
+        <SafeAreaView style={styles.container}>
+          <Text style={styles.title}>Second Memory</Text>
+          <View style={styles.header}>
+            <Text style={styles.userName}>{displayName}</Text>
+            <View style={styles.headerActions}>
+              <Pressable style={styles.headerButton} onPress={() => setScreen('settings')}>
+                <Text style={styles.headerButtonText}>Settings</Text>
+              </Pressable>
+              <Pressable style={styles.headerButton} onPress={() => void handleSignOut()}>
+                <Text style={styles.headerButtonText}>Sign out</Text>
+              </Pressable>
+            </View>
+          </View>
 
-      <ModeSwitch mode={mode} onModeChange={setMode} />
+          <BackendHealthStatus mode={mode} />
 
-      <View style={styles.content}>
-        {mode === 'self-talk' ? <SelfTalkScreen /> : <AskScreen />}
-      </View>
-    </SafeAreaView>
+          <ModeSwitch mode={mode} onModeChange={setMode} />
+
+          <View style={styles.content}>
+            {mode === 'self-talk' ? (
+              <SelfTalkScreen mode={mode} />
+            ) : (
+              <AskScreen mode={mode} />
+            )}
+          </View>
+        </SafeAreaView>
+      )}
+    </BackendHealthProvider>
   );
 }
 

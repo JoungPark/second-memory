@@ -1,4 +1,9 @@
-import { useAskChat, type ChatMessage } from '@second-memory/ui';
+import {
+  type AppMode,
+  useAskChat,
+  useBackendHealth,
+  type ChatMessage,
+} from '@second-memory/ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
@@ -42,8 +47,14 @@ function AssistantMessageMeta({ message }: { message: ChatMessage }) {
   );
 }
 
-export function AskScreen() {
+type AskScreenProps = {
+  mode: AppMode;
+};
+
+export function AskScreen({ mode }: AskScreenProps) {
   const { messages, sendMessage, submitting, error } = useAskChat();
+  const { canSend, status } = useBackendHealth();
+  const sendEnabled = canSend(mode);
   const [text, setText] = useState('');
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const insets = useSafeAreaInsets();
@@ -69,7 +80,7 @@ export function AskScreen() {
 
   async function handleSend() {
     const trimmed = text.trim();
-    if (!trimmed || submitting) {
+    if (!trimmed || submitting || !sendEnabled) {
       return;
     }
 
@@ -145,13 +156,17 @@ export function AskScreen() {
           <Pressable
             style={[
               styles.sendButton,
-              (!text.trim() || submitting) && styles.sendButtonDisabled,
+              (!text.trim() || submitting || !sendEnabled) && styles.sendButtonDisabled,
             ]}
-            disabled={!text.trim() || submitting}
+            disabled={!text.trim() || submitting || !sendEnabled}
             onPress={() => void handleSend()}
           >
             <Text style={styles.sendButtonText}>
-              {submitting ? 'Sending…' : 'Send'}
+              {submitting
+                ? 'Sending…'
+                : status === 'checking'
+                  ? 'Checking…'
+                  : 'Send'}
             </Text>
           </Pressable>
         </View>

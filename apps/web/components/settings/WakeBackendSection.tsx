@@ -1,26 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useBackendHealth } from '@second-memory/ui';
 
 import { getAskApiBaseUrl, getMemoryApiBaseUrl } from '@/lib/api/base-url';
-import type { HealthCheckResult } from '@/lib/api/wake-backend';
-import { wakeBackendServices } from '@/lib/api/wake-backend';
 
 export function WakeBackendSection() {
-  const [waking, setWaking] = useState(false);
-  const [results, setResults] = useState<HealthCheckResult[] | null>(null);
-
-  async function handleWakeBackend() {
-    setWaking(true);
-    setResults(null);
-
-    try {
-      const healthResults = await wakeBackendServices();
-      setResults(healthResults);
-    } finally {
-      setWaking(false);
-    }
-  }
+  const { status, results, refresh } = useBackendHealth();
+  const waking = status === 'checking';
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -40,13 +26,13 @@ export function WakeBackendSection() {
       <button
         type="button"
         disabled={waking}
-        onClick={() => void handleWakeBackend()}
+        onClick={() => void refresh()}
         className="mt-2 self-start rounded-lg bg-zinc-700 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-70"
       >
         {waking ? 'Waking…' : 'Wake backend'}
       </button>
 
-      {results ? (
+      {results.length > 0 ? (
         <div className="mt-1 flex flex-col gap-1">
           {results.map((result) => (
             <p

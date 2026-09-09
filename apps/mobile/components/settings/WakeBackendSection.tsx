@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useBackendHealth } from '@second-memory/ui';
 import {
   ActivityIndicator,
   Pressable,
@@ -8,24 +8,10 @@ import {
 } from 'react-native';
 
 import { getAskApiBaseUrl, getMemoryApiBaseUrl } from '@/lib/api/base-url';
-import type { HealthCheckResult } from '@/lib/api/wake-backend';
-import { wakeBackendServices } from '@/lib/api/wake-backend';
 
 export function WakeBackendSection() {
-  const [waking, setWaking] = useState(false);
-  const [results, setResults] = useState<HealthCheckResult[] | null>(null);
-
-  async function handleWakeBackend() {
-    setWaking(true);
-    setResults(null);
-
-    try {
-      const healthResults = await wakeBackendServices();
-      setResults(healthResults);
-    } finally {
-      setWaking(false);
-    }
-  }
+  const { status, results, refresh } = useBackendHealth();
+  const waking = status === 'checking';
 
   return (
     <View style={styles.container}>
@@ -41,7 +27,7 @@ export function WakeBackendSection() {
       <Pressable
         style={[styles.wakeButton, waking && styles.wakeButtonDisabled]}
         disabled={waking}
-        onPress={() => void handleWakeBackend()}
+        onPress={() => void refresh()}
       >
         {waking ? (
           <ActivityIndicator color="#ffffff" size="small" />
@@ -50,7 +36,7 @@ export function WakeBackendSection() {
         )}
       </Pressable>
 
-      {results ? (
+      {results.length > 0 ? (
         <View style={styles.results}>
           {results.map((result) => (
             <Text

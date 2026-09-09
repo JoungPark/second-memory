@@ -1,18 +1,29 @@
 'use client';
 
-import { useMemoryApi, useRecentMemories } from '@second-memory/ui';
+import {
+  type AppMode,
+  useBackendHealth,
+  useMemoryApi,
+  useRecentMemories,
+} from '@second-memory/ui';
 import { useState } from 'react';
 
-export function SelfTalkScreen() {
+type SelfTalkScreenProps = {
+  mode: AppMode;
+};
+
+export function SelfTalkScreen({ mode }: SelfTalkScreenProps) {
   const memoryApi = useMemoryApi();
   const recent = useRecentMemories();
+  const { canSend, status } = useBackendHealth();
+  const sendEnabled = canSend(mode);
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSend() {
     const trimmed = text.trim();
-    if (!trimmed || submitting) {
+    if (!trimmed || submitting || !sendEnabled) {
       return;
     }
 
@@ -106,10 +117,14 @@ export function SelfTalkScreen() {
         <button
           type="button"
           onClick={() => void handleSend()}
-          disabled={!text.trim() || submitting}
+          disabled={!text.trim() || submitting || !sendEnabled}
           className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
         >
-          {submitting ? 'Sending…' : 'Send'}
+          {submitting
+            ? 'Sending…'
+            : status === 'checking'
+              ? 'Checking…'
+              : 'Send'}
         </button>
       </div>
     </div>
