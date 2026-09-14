@@ -101,6 +101,20 @@ export interface AskMessageResponse {
   lowConfidenceFlag: boolean;
 }
 
+export interface AskEndRequest {
+  sessionId: string;
+}
+
+export interface AskEndResponse {
+  summaryId: string;
+  summaryText: string;
+  references: string[];
+}
+
+export interface AskCloseRequest {
+  sessionId: string;
+}
+
 export const EMBEDDING_QUEUE_NAME = 'embedding-jobs' as const;
 export const EMBEDDING_JOB_NAME = 'embed-entry' as const;
 

@@ -79,4 +79,30 @@ describe('SessionStoreService', () => {
 
     jest.useRealTimers();
   });
+
+  it('deletes a session for the authenticated user', () => {
+    const created = service.resolveSession(context);
+    service.appendTurn(created, { role: 'user', content: 'Hello' });
+
+    service.deleteSession(context, created.sessionId);
+
+    expect(() => service.resolveSession(context, created.sessionId)).toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('ignores delete when session is already missing', () => {
+    expect(() => service.deleteSession(context, 'missing-session')).not.toThrow();
+  });
+
+  it('rejects delete for another user session', () => {
+    const created = service.resolveSession(context);
+
+    expect(() =>
+      service.deleteSession(
+        { tenantId: 'tenant-1', userId: 'user-2' },
+        created.sessionId,
+      ),
+    ).toThrow(ForbiddenException);
+  });
 });

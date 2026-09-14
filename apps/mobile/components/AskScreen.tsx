@@ -52,7 +52,18 @@ type AskScreenProps = {
 };
 
 export function AskScreen({ mode }: AskScreenProps) {
-  const { messages, sendMessage, submitting, error } = useAskChat();
+  const {
+    messages,
+    sendMessage,
+    saveSession,
+    closeSession,
+    submitting,
+    saving,
+    error,
+    hasConversation,
+    phase,
+    summaryText,
+  } = useAskChat();
   const { canSend, status } = useBackendHealth();
   const sendEnabled = canSend(mode);
   const [text, setText] = useState('');
@@ -63,24 +74,27 @@ export function AskScreen({ mode }: AskScreenProps) {
     Platform.OS === 'android'
       ? 16 + keyboardBottomInset
       : Math.max(insets.bottom, 16);
+  const sessionActionsEnabled =
+    hasConversation && !submitting && !saving && sendEnabled;
+  const isSummaryPhase = phase === 'summary';
 
   const scrollToLatest = useCallback((animated = true) => {
-    if (messages.length === 0) {
+    if (messages.length === 0 && !isSummaryPhase) {
       return;
     }
 
     requestAnimationFrame(() => {
       listRef.current?.scrollToEnd({ animated });
     });
-  }, [messages.length]);
+  }, [isSummaryPhase, messages.length]);
 
   useEffect(() => {
     scrollToLatest();
-  }, [messages, scrollToLatest]);
+  }, [messages, scrollToLatest, summaryText]);
 
   async function handleSend() {
     const trimmed = text.trim();
-    if (!trimmed || submitting || !sendEnabled) {
+    if (!trimmed || submitting || saving || !sendEnabled || isSummaryPhase) {
       return;
     }
 
@@ -97,15 +111,27 @@ export function AskScreen({ mode }: AskScreenProps) {
           keyExtractor={(item) => item.id}
           style={styles.messagesScroll}
           contentContainerStyle={
-            messages.length === 0 ? styles.messagesEmpty : styles.messagesContent
+            messages.length === 0 && !isSummaryPhase
+              ? styles.messagesEmpty
+              : styles.messagesContent
           }
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={() => scrollToLatest(false)}
           onLayout={() => scrollToLatest(false)}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>
-              Ask a question about your memories.
-            </Text>
+            !isSummaryPhase ? (
+              <Text style={styles.emptyText}>
+                Ask a question about your memories.
+              </Text>
+            ) : null
+          }
+          ListFooterComponent={
+            isSummaryPhase && summaryText ? (
+              <View style={styles.summaryCard}>
+                <Text style={styles.summaryLabel}>Conversation summary</Text>
+                <Text style={styles.summaryText}>{summaryText}</Text>
+              </View>
+            ) : null
           }
           renderItem={({ item }) => (
             <View
@@ -142,34 +168,65 @@ export function AskScreen({ mode }: AskScreenProps) {
       </View>
 
       <View style={[styles.bottomSection, { paddingBottom: bottomPadding }]}>
-        <View style={styles.inputRow}>
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            placeholder="Type a message…"
-            placeholderTextColor="#a1a1aa"
-            style={styles.input}
-            editable={!submitting}
-            onSubmitEditing={() => void handleSend()}
-            returnKeyType="send"
-          />
+        <View style={styles.actionRow}>
+          {!isSummaryPhase ? (
+            <Pressable
+              style={[
+                styles.actionButton,
+                !sessionActionsEnabled && styles.actionButtonDisabled,
+              ]}
+              disabled={!sessionActionsEnabled}
+              onPress={() => void saveSession()}
+            >
+              <Text style={styles.actionButtonText}>
+                {saving ? 'Saving…' : 'Save'}
+              </Text>
+            </Pressable>
+          ) : null}
           <Pressable
             style={[
-              styles.sendButton,
-              (!text.trim() || submitting || !sendEnabled) && styles.sendButtonDisabled,
+              styles.actionButton,
+              !isSummaryPhase &&
+                !sessionActionsEnabled &&
+                styles.actionButtonDisabled,
             ]}
-            disabled={!text.trim() || submitting || !sendEnabled}
-            onPress={() => void handleSend()}
+            disabled={isSummaryPhase ? false : !sessionActionsEnabled}
+            onPress={() => void closeSession()}
           >
-            <Text style={styles.sendButtonText}>
-              {submitting
-                ? 'Sending…'
-                : status === 'checking'
-                  ? 'Checking…'
-                  : 'Send'}
-            </Text>
+            <Text style={styles.actionButtonText}>Close</Text>
           </Pressable>
         </View>
+        {!isSummaryPhase ? (
+          <View style={styles.inputRow}>
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              placeholder="Type a message…"
+              placeholderTextColor="#a1a1aa"
+              style={styles.input}
+              editable={!submitting && !saving}
+              onSubmitEditing={() => void handleSend()}
+              returnKeyType="send"
+            />
+            <Pressable
+              style={[
+                styles.sendButton,
+                (!text.trim() || submitting || saving || !sendEnabled) &&
+                  styles.sendButtonDisabled,
+              ]}
+              disabled={!text.trim() || submitting || saving || !sendEnabled}
+              onPress={() => void handleSend()}
+            >
+              <Text style={styles.sendButtonText}>
+                {submitting
+                  ? 'Sending…'
+                  : status === 'checking'
+                    ? 'Checking…'
+                    : 'Send'}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </View>
     </KeyboardAwareScreen>
@@ -260,11 +317,51 @@ const styles = StyleSheet.create({
     color: '#52525b',
     overflow: 'hidden',
   },
+  summaryCard: {
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: '#a7f3d0',
+    borderRadius: 8,
+    backgroundColor: '#ecfdf5',
+    padding: 12,
+    gap: 8,
+  },
+  summaryLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#065f46',
+    textTransform: 'uppercase',
+  },
+  summaryText: {
+    fontSize: 14,
+    color: '#064e3b',
+  },
   bottomSection: {
     gap: 8,
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#e4e4e7',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  actionButton: {
+    borderWidth: 1,
+    borderColor: '#d4d4d8',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#ffffff',
+  },
+  actionButtonDisabled: {
+    opacity: 0.5,
+  },
+  actionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#18181b',
   },
   inputRow: {
     flexDirection: 'row',

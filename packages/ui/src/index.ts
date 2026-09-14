@@ -13,7 +13,7 @@ export {
   isServiceHealthy,
   type BackendHealthStatus,
 } from './api/backend-health-utils';
-export { useAskChat } from './api/useAskChat';
+export { useAskChat, type AskChatPhase } from './api/useAskChat';
 export { useRecentMemories } from './api/useRecentMemories';
 export { SharedWelcome, type SharedWelcomeProps } from './SharedWelcome';
 export { type AppMode, type ChatMessage } from './AppMode';

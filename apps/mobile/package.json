@@ -12,6 +12,8 @@
     "web": "expo start --web",
     "build": "expo export --platform all",
     "lint": "eslint .",
+    "eas:build:android:development": "eas build --platform android --profile development",
+    "eas:build:android:preview": "eas build --platform android --profile preview",
     "test": "echo \"TODO: add Expo test setup\""
   },
   "dependencies": {

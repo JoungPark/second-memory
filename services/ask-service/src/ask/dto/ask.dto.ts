@@ -43,3 +43,13 @@ export class AskMessageDto {
   @Type(() => AskFiltersDto)
   filters?: AskFiltersDto;
 }
+
+export class AskEndDto {
+  @IsUUID()
+  sessionId!: string;
+}
+
+export class AskCloseDto {
+  @IsUUID()
+  sessionId!: string;
+}

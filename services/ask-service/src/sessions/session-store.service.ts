@@ -7,6 +7,7 @@ import type { RequestContext } from '@second-memory/shared-types';
 export interface SessionTurn {
   role: 'user' | 'assistant';
   content: string;
+  citedMemoryIds?: string[];
 }
 
 export interface SessionState {
@@ -62,6 +63,24 @@ export class SessionStoreService {
     session.turns.push(turn);
     session.expiresAt = Date.now() + this.ttlMs;
     this.sessions.set(session.sessionId, session);
+  }
+
+  deleteSession(context: RequestContext, sessionId: string): void {
+    this.evictExpiredSessions();
+
+    const existing = this.sessions.get(sessionId);
+    if (!existing) {
+      return;
+    }
+
+    if (
+      existing.tenantId !== context.tenantId ||
+      existing.userId !== context.userId
+    ) {
+      throw new ForbiddenException('Session does not belong to the authenticated user');
+    }
+
+    this.sessions.delete(sessionId);
   }
 
   @Cron(CronExpression.EVERY_5_MINUTES)

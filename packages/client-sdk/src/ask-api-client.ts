@@ -1,4 +1,10 @@
-import type { AskMessageRequest, AskMessageResponse } from '@second-memory/shared-types';
+import type {
+  AskCloseRequest,
+  AskEndRequest,
+  AskEndResponse,
+  AskMessageRequest,
+  AskMessageResponse,
+} from '@second-memory/shared-types';
 
 import { authenticatedRequest } from './request.js';
 import type { GetIdToken } from './types.js';
@@ -24,6 +30,22 @@ export class AskApiClient {
     });
 
     return response.json() as Promise<AskMessageResponse>;
+  }
+
+  async endSession(body: AskEndRequest): Promise<AskEndResponse> {
+    const response = await this.request('/v1/ask/end', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+
+    return response.json() as Promise<AskEndResponse>;
+  }
+
+  async closeSession(body: AskCloseRequest): Promise<void> {
+    await this.request('/v1/ask/close', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
   }
 
   private async request(path: string, init: RequestInit): Promise<Response> {

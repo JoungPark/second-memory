@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { RequestContext } from '@second-memory/shared-types';
@@ -28,11 +29,13 @@ describe('AskService', () => {
   beforeEach(async () => {
     memoryClient = {
       searchMemories: jest.fn(),
+      createInternalMemory: jest.fn(),
     } as unknown as jest.Mocked<MemoryClientService>;
 
     sessionStore = {
       resolveSession: jest.fn().mockReturnValue({ ...session, turns: [] }),
       appendTurn: jest.fn(),
+      deleteSession: jest.fn(),
     } as unknown as jest.Mocked<SessionStoreService>;
 
     llmService = {
@@ -99,6 +102,11 @@ describe('AskService', () => {
     expect(response.confidence).toBe(0.8);
     expect(response.lowConfidenceFlag).toBe(false);
     expect(sessionStore.appendTurn).toHaveBeenCalledTimes(2);
+    expect(sessionStore.appendTurn).toHaveBeenNthCalledWith(2, expect.anything(), {
+      role: 'assistant',
+      content: 'You visited Kyoto in spring. [id=memory-1]',
+      citedMemoryIds: ['memory-1'],
+    });
   });
 
   it('flags low confidence when retrieval scores are weak', async () => {
@@ -145,5 +153,53 @@ describe('AskService', () => {
         expect.objectContaining({ role: 'user', content: 'Follow up question' }),
       ]),
     );
+  });
+
+  it('summarizes and saves a conversation on endSession', async () => {
+    sessionStore.resolveSession.mockReturnValue({
+      ...session,
+      turns: [
+        { role: 'user', content: 'Can I cancel my gym membership?' },
+        {
+          role: 'assistant',
+          content: 'Your membership started on 2026-01-01.',
+          citedMemoryIds: ['memory-1'],
+        },
+      ],
+    });
+    llmService.chat.mockResolvedValue({
+      content: 'I asked about canceling my gym membership.',
+    });
+    memoryClient.createInternalMemory.mockResolvedValue({
+      id: 'summary-1',
+      createdAt: '2026-03-01T00:00:00.000Z',
+    });
+
+    const response = await service.endSession(context, { sessionId: 'session-1' });
+
+    expect(response.summaryId).toBe('summary-1');
+    expect(response.summaryText).toBe('I asked about canceling my gym membership.');
+    expect(response.references).toEqual(['memory-1']);
+    expect(memoryClient.createInternalMemory).toHaveBeenCalledWith(context, {
+      entryType: 'conversation_summary',
+      content: 'I asked about canceling my gym membership.',
+      sourceReferences: ['memory-1'],
+      idempotencyKey: 'session-1',
+    });
+    expect(sessionStore.deleteSession).toHaveBeenCalledWith(context, 'session-1');
+  });
+
+  it('rejects endSession for an empty conversation', async () => {
+    sessionStore.resolveSession.mockReturnValue({ ...session, turns: [] });
+
+    await expect(service.endSession(context, { sessionId: 'session-1' })).rejects.toThrow(
+      BadRequestException,
+    );
+  });
+
+  it('discards a session on closeSession', () => {
+    service.closeSession(context, { sessionId: 'session-1' });
+
+    expect(sessionStore.deleteSession).toHaveBeenCalledWith(context, 'session-1');
   });
 });

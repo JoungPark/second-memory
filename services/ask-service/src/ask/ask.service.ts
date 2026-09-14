@@ -1,7 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type {
   AskCitation,
+  AskCloseRequest,
+  AskEndRequest,
+  AskEndResponse,
   AskMessageRequest,
   AskMessageResponse,
   RequestContext,
@@ -11,7 +14,7 @@ import { OpenAiCompatibleService } from '../llm/openai-compatible.service';
 import type { ChatMessage } from '../llm/llm.types';
 import { MemoryClientService } from '../memory/memory-client.service';
 import { SessionStoreService } from '../sessions/session-store.service';
-import { buildSystemPrompt, truncateExcerpt } from './prompts';
+import { buildSummaryPrompt, buildSystemPrompt, truncateExcerpt } from './prompts';
 
 const DEFAULT_TOP_K = 5;
 
@@ -60,6 +63,7 @@ export class AskService {
     this.sessionStore.appendTurn(session, {
       role: 'assistant',
       content: completion.content,
+      citedMemoryIds: citations.map((citation) => citation.memoryId),
     });
 
     return {
@@ -69,6 +73,60 @@ export class AskService {
       confidence,
       lowConfidenceFlag,
     };
+  }
+
+  async endSession(
+    context: RequestContext,
+    request: AskEndRequest,
+  ): Promise<AskEndResponse> {
+    const session = this.sessionStore.resolveSession(context, request.sessionId);
+
+    if (session.turns.length === 0) {
+      throw new BadRequestException('Cannot save an empty conversation');
+    }
+
+    const completion = await this.llmService.chat([
+      {
+        role: 'system',
+        content: buildSummaryPrompt(session.turns),
+      },
+    ]);
+
+    const summaryText = completion.content.trim();
+    const references = this.collectSourceReferences(session.turns);
+
+    const created = await this.memoryClient.createInternalMemory(context, {
+      entryType: 'conversation_summary',
+      content: summaryText,
+      sourceReferences: references,
+      idempotencyKey: session.sessionId,
+    });
+
+    this.sessionStore.deleteSession(context, session.sessionId);
+
+    return {
+      summaryId: created.id,
+      summaryText,
+      references,
+    };
+  }
+
+  closeSession(context: RequestContext, request: AskCloseRequest): void {
+    this.sessionStore.deleteSession(context, request.sessionId);
+  }
+
+  private collectSourceReferences(
+    turns: Array<{ citedMemoryIds?: string[] }>,
+  ): string[] {
+    const references = new Set<string>();
+
+    for (const turn of turns) {
+      for (const memoryId of turn.citedMemoryIds ?? []) {
+        references.add(memoryId);
+      }
+    }
+
+    return [...references];
   }
 
   private computeConfidence(results: SearchMemoryResult[]): number {

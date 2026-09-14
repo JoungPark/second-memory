@@ -1,4 +1,5 @@
 import type { SearchMemoryResult } from '@second-memory/shared-types';
+import type { SessionTurn } from '../sessions/session-store.service';
 
 const EXCERPT_MAX_LENGTH = 200;
 
@@ -43,4 +44,21 @@ export function truncateExcerpt(content: string, maxLength = EXCERPT_MAX_LENGTH)
   }
 
   return `${normalized.slice(0, maxLength - 3)}...`;
+}
+
+export function buildSummaryPrompt(turns: SessionTurn[]): string {
+  const transcript = turns
+    .map((turn) => `${turn.role === 'user' ? 'User' : 'Assistant'}: ${turn.content}`)
+    .join('\n');
+
+  return [
+    'You are summarizing a personal memory assistant conversation for Second Memory.',
+    'Write a concise first-person summary from the user\'s perspective.',
+    'Capture the main topic, key facts discussed, and any decisions or outcomes.',
+    'Do not invent details that were not part of the conversation.',
+    'Return only the summary text with no preamble or labels.',
+    '',
+    'Conversation:',
+    transcript,
+  ].join('\n');
 }

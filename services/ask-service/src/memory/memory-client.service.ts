@@ -1,6 +1,8 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type {
+  CreateInternalMemoryRequest,
+  CreateMemoryResponse,
   RequestContext,
   SearchMemoriesRequest,
   SearchMemoriesResponse,
@@ -39,5 +41,29 @@ export class MemoryClientService {
     }
 
     return response.json() as Promise<SearchMemoriesResponse>;
+  }
+
+  async createInternalMemory(
+    context: RequestContext,
+    request: CreateInternalMemoryRequest,
+  ): Promise<CreateMemoryResponse> {
+    const response = await fetch(`${this.memoryServiceUrl}/internal/v1/memories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        [REQUEST_CONTEXT_HEADERS.tenantId]: context.tenantId,
+        [REQUEST_CONTEXT_HEADERS.userId]: context.userId,
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new ServiceUnavailableException(
+        `Memory service create failed (${response.status}): ${message}`,
+      );
+    }
+
+    return response.json() as Promise<CreateMemoryResponse>;
   }
 }
