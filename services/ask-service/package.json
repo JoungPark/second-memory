@@ -17,6 +17,7 @@
     "@nestjs/core": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
     "@nestjs/schedule": "^6.0.0",
+    "@nestjs/swagger": "^11.2.0",
     "@second-memory/nest-auth": "workspace:*",
     "@second-memory/server-db": "workspace:*",
     "@second-memory/shared-types": "workspace:*",

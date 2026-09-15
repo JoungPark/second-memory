@@ -1,4 +1,5 @@
 import { EntryType } from '@second-memory/shared-types';
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsIn,
@@ -7,7 +8,22 @@ import {
   IsString,
   MaxLength,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+
+class SearchFiltersDto {
+  @IsOptional()
+  @IsISO8601()
+  from?: string;
+
+  @IsOptional()
+  @IsISO8601()
+  to?: string;
+
+  @IsOptional()
+  @IsIn(['note', 'self_talk', 'conversation_summary'])
+  entryType?: EntryType;
+}
 
 export class CreateMemoryDto {
   @IsIn(['note', 'self_talk'])
@@ -93,9 +109,7 @@ export class SearchMemoriesDto {
   topK?: number;
 
   @IsOptional()
-  filters?: {
-    from?: string;
-    to?: string;
-    entryType?: EntryType;
-  };
+  @ValidateNested()
+  @Type(() => SearchFiltersDto)
+  filters?: SearchFiltersDto;
 }

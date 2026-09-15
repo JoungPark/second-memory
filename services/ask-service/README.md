@@ -33,6 +33,12 @@ pnpm --filter @second-memory/ask-service dev
 
 Default port: `3002`
 
+## Swagger UI
+
+Interactive API docs are available at [http://localhost:3002/docs](http://localhost:3002/docs).
+
+Use the **Authorize** button to set a Firebase Bearer token for `/v1/*` routes.
+
 ## API
 
 ### `POST /v1/ask/messages`
