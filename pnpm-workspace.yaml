@@ -3,6 +3,16 @@ packages:
   - services/*
   - packages/*
 
+allowBuilds:
+  '@firebase/util': false
+  '@prisma/client': false
+  '@prisma/engines': true
+  '@scarf/scarf': false
+  msgpackr-extract: false
+  prisma: false
+  protobufjs: false
+  unrs-resolver: false
+
 overrides:
   react: 19.2.3
   '@types/react': ~19.2.4
