@@ -2,7 +2,7 @@
   "name": "second-memory",
   "private": true,
   "version": "0.1.0",
-  "packageManager": "pnpm@9.12.0",
+  "packageManager": "pnpm@12.21.0",
   "scripts": {
     "dev": "turbo run dev --parallel --ui=tui --filter=!@second-memory/worker-embeddings",
     "memory-service:start": "turbo run start --filter=@second-memory/memory-service",
@@ -14,12 +14,6 @@
     "format:check": "prettier --check .",
     "test": "turbo run test",
     "check": "turbo run lint test"
-  },
-  "pnpm": {
-    "overrides": {
-      "react": "19.2.3",
-      "@types/react": "~19.2.4"
-    }
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",

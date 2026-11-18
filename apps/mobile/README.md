@@ -5,7 +5,7 @@ Expo mobile client for Second Memory. Uses a development build (`expo-dev-client
 ## Prerequisites
 
 - Node.js 22.13+ (required by Expo SDK 57)
-- pnpm 9+ (from the monorepo root)
+- pnpm 12.21.0 (from the monorepo root)
 - [Expo CLI](https://docs.expo.dev/get-started/installation/) (optional; scripts use `npx expo`)
 - For device builds:
   - **iOS:** Xcode and CocoaPods
