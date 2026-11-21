@@ -15,6 +15,7 @@ This folder contains product and architecture documents for the platform.
 9. [Architecture: V1 Monorepo Structure](architecture/v1-monorepo-structure.md)
 10. [Architecture: AWS Migration Plan](architecture/aws-migration-plan.md)
 11. [Architecture: AWS Migration Decisions](architecture/aws-migration-decisions.md)
+12. [Architecture: User Service Proposal](architecture/user-service-proposal.md)
 
 ## How to Use
 
