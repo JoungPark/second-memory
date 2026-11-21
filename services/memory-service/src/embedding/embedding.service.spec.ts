@@ -1,5 +1,8 @@
 import { ConfigService } from '@nestjs/config';
-import { EmbeddingService, EmbeddingUnavailableError } from './embedding.service';
+import {
+  EmbeddingService,
+  EmbeddingUnavailableError,
+} from './embedding.service';
 
 describe('EmbeddingService', () => {
   const createService = (overrides: Record<string, unknown> = {}) => {
@@ -77,11 +80,35 @@ describe('EmbeddingService', () => {
   });
 
   it('throws EmbeddingUnavailableError when the service is unreachable', async () => {
-    jest.spyOn(global, 'fetch').mockRejectedValue(new Error('connection refused'));
+    jest
+      .spyOn(global, 'fetch')
+      .mockRejectedValue(new Error('connection refused'));
 
     const service = createService();
 
-    await expect(service.embedText('hello')).rejects.toThrow(EmbeddingUnavailableError);
+    await expect(service.embedText('hello')).rejects.toThrow(
+      EmbeddingUnavailableError,
+    );
+  });
+
+  it('aborts an embedding response that exceeds the configured timeout', async () => {
+    jest.spyOn(global, 'fetch').mockImplementation(async (_url, options) => {
+      const { signal } = options ?? {};
+      return {
+        ok: true,
+        json: () =>
+          new Promise((_resolve, reject) => {
+            signal?.addEventListener('abort', () => reject(signal.reason), {
+              once: true,
+            });
+          }),
+      } as Response;
+    });
+
+    const service = createService({ 'embedding.timeoutMs': 10 });
+    await expect(service.embedText('hello')).rejects.toThrow(
+      EmbeddingUnavailableError,
+    );
   });
 
   it('throws EmbeddingUnavailableError when the service returns an OpenAI error', async () => {
@@ -96,7 +123,9 @@ describe('EmbeddingService', () => {
 
     const service = createService();
 
-    await expect(service.embedText('hello')).rejects.toThrow(EmbeddingUnavailableError);
+    await expect(service.embedText('hello')).rejects.toThrow(
+      EmbeddingUnavailableError,
+    );
   });
 
   it('throws EmbeddingUnavailableError when the service returns a legacy error', async () => {
@@ -111,7 +140,9 @@ describe('EmbeddingService', () => {
 
     const service = createService();
 
-    await expect(service.embedText('hello')).rejects.toThrow(EmbeddingUnavailableError);
+    await expect(service.embedText('hello')).rejects.toThrow(
+      EmbeddingUnavailableError,
+    );
   });
 
   it('throws EmbeddingUnavailableError when the response has no embedding', async () => {
@@ -124,6 +155,8 @@ describe('EmbeddingService', () => {
 
     const service = createService();
 
-    await expect(service.embedText('hello')).rejects.toThrow(EmbeddingUnavailableError);
+    await expect(service.embedText('hello')).rejects.toThrow(
+      EmbeddingUnavailableError,
+    );
   });
 });

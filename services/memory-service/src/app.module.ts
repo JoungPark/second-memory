@@ -1,11 +1,12 @@
-import { Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from '@second-memory/nest-auth';
 import { DatabaseModule } from '@second-memory/server-db';
 import configuration from './config/configuration';
 import { HealthModule } from './health/health.module';
 import { MemoriesModule } from './memories/memories.module';
-import { QueueModule } from './queue/queue.module';
+
+export type MemoryAppProfile = 'server' | 'lambda-web';
 
 @Module({
   imports: [
@@ -13,11 +14,18 @@ import { QueueModule } from './queue/queue.module';
       isGlobal: true,
       load: [configuration],
     }),
-    DatabaseModule,
     AuthModule,
     HealthModule,
-    QueueModule,
-    MemoriesModule,
   ],
 })
-export class AppModule {}
+export class AppModule {
+  static forProfile(profile: MemoryAppProfile): DynamicModule {
+    return {
+      module: AppModule,
+      imports:
+        profile === 'lambda-web'
+          ? [DatabaseModule.withLazyConnection(), MemoriesModule]
+          : [DatabaseModule, MemoriesModule.withInternalRoutes()],
+    };
+  }
+}

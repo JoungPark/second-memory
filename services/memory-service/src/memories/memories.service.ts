@@ -154,8 +154,6 @@ export class MemoriesService {
       throw error;
     }
 
-    console.log('vector', vector);
-
     return this.repository.create(context, request, {
       vector,
       model: this.embeddingModel,

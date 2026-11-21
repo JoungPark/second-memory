@@ -1,11 +1,14 @@
 node_modules/
+/packages/server-db/prisma/generated/
 .pnpm-store/
 .turbo/
 dist/
+cdk.out/
 coverage/
 .env
 .env.*
 !.env.example
+/infra/aws/database-ca.pem
 .DS_Store
 
 # Python

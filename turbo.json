@@ -5,6 +5,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "build/**"]
     },
+    "@second-memory/server-db#build": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
     "lint": {
       "dependsOn": ["^lint"]
     },

@@ -1,42 +1,35 @@
-import { ValidationPipe } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AppModule } from './app.module';
+import { configureHttp } from './app-http';
+import {
+  loadLambdaWebSecrets,
+  readLambdaWebAddress,
+} from './config/lambda-web';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
+  const webEndpoint = process.env.AWS_LAMBDA_HTTP_ENDPOINT;
+  const address =
+    webEndpoint === undefined ? undefined : readLambdaWebAddress(webEndpoint);
+  const profile = address ? 'lambda-web' : 'server';
+  if (address) {
+    await loadLambdaWebSecrets();
+  }
 
-  app.enableCors({
-    origin: configService.get<string[]>('cors.origins'),
-    allowedHeaders: ['Authorization', 'Content-Type'],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  });
+  const { AppModule } = await import('./app.module');
+  const app = await NestFactory.create(AppModule.forProfile(profile));
+  configureHttp(app, profile);
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
-
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Memory Service')
-    .setVersion('0.1.0')
-    .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      'firebase',
-    )
-    .addApiKey({ type: 'apiKey', in: 'header', name: 'x-tenant-id' }, 'x-tenant-id')
-    .addApiKey({ type: 'apiKey', in: 'header', name: 'x-user-id' }, 'x-user-id')
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('docs', app, document);
-
-  const port = configService.get<number>('port') ?? 3001;
-  await app.listen(port);
+  if (address) {
+    await app.listen(address.port, address.host);
+  } else {
+    await app.listen(app.get(ConfigService).get<number>('port') ?? 3001);
+  }
 }
 
-void bootstrap();
+void bootstrap().catch((error: unknown) => {
+  Logger.error(
+    error instanceof Error ? error.message : 'Memory service startup failed',
+  );
+  process.exitCode = 1;
+});

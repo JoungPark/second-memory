@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma } from '@prisma/client';
 import type {
   CreateInternalMemoryRequest,
   CreateMemoryRequest,
@@ -13,7 +12,7 @@ import type {
   SearchMemoriesResponse,
   SearchMemoryResult,
 } from '@second-memory/shared-types';
-import { PrismaService } from '@second-memory/server-db';
+import { Prisma, PrismaService } from '@second-memory/server-db';
 import { EntryEmbeddingStore } from '../embedding/entry-embedding.store';
 
 interface VectorSearchRow {

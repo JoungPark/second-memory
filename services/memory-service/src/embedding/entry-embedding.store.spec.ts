@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@second-memory/server-db';
 import { EntryEmbeddingStore } from './entry-embedding.store';
 
 describe('EntryEmbeddingStore', () => {

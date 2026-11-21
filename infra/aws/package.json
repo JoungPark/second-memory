@@ -1,0 +1,19 @@
+{
+  "name": "@second-memory/aws",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint bin lib",
+    "cdk": "cdk"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.277.0",
+    "constructs": "^10.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "aws-cdk": "2.1148.1",
+    "typescript": "^5.6.2"
+  }
+}

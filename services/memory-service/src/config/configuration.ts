@@ -32,6 +32,7 @@ export default () => ({
     apiKey: process.env.EMBEDDING_API_KEY ?? '',
     model: process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small',
     storageMode: parseEmbeddingStorageMode(process.env.EMBEDDING_STORAGE_MODE),
+    timeoutMs: process.env.AWS_LAMBDA_HTTP_ENDPOINT ? 15_000 : undefined,
   },
   search: {
     minScore: parseFloat(process.env.MIN_SEARCH_SCORE ?? '0'),

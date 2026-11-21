@@ -2,6 +2,7 @@ packages:
   - apps/*
   - services/*
   - packages/*
+  - infra/aws
 
 allowBuilds:
   '@firebase/util': false

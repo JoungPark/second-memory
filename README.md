@@ -38,9 +38,12 @@ packages/
 	client-sdk/          # Typed client helpers
 
 infra/
+	aws/                 # CDK deployment for memory-service on Lambda Web Functions
 	docker/
 		docker-compose.yml # Redis + PostgreSQL (+ optional worker)
 ```
+
+See the [AWS CDK deployment README](infra/aws/README.md) for deployment instructions.
 
 ## Tooling
 

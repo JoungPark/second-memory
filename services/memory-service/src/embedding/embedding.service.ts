@@ -26,12 +26,14 @@ export class EmbeddingService {
   private readonly baseUrl: string;
   private readonly apiKey: string;
   private readonly model: string;
+  private readonly timeoutMs?: number;
 
   constructor(private readonly configService: ConfigService) {
     this.baseUrl = this.configService
       .get<string>('embedding.baseUrl', 'https://api.openai.com/v1')
       .replace(/\/$/, '');
     this.apiKey = this.configService.get<string>('embedding.apiKey', '');
+    this.timeoutMs = this.configService.get<number>('embedding.timeoutMs');
     this.model = this.configService.get<string>(
       'embedding.model',
       'text-embedding-3-small',
@@ -53,6 +55,10 @@ export class EmbeddingService {
       response = await fetch(`${this.baseUrl}/embeddings`, {
         method: 'POST',
         headers,
+        signal:
+          this.timeoutMs === undefined
+            ? undefined
+            : AbortSignal.timeout(this.timeoutMs),
         body: JSON.stringify({
           input: text,
           model: this.model,
@@ -86,7 +92,9 @@ export class EmbeddingService {
     const embedding = payload.data?.[0]?.embedding;
 
     if (!embedding) {
-      throw new EmbeddingUnavailableError('Embedding response did not include a vector');
+      throw new EmbeddingUnavailableError(
+        'Embedding response did not include a vector',
+      );
     }
 
     const normalized = this.normalize(embedding.map((value) => Number(value)));
@@ -103,7 +111,9 @@ export class EmbeddingService {
   }
 
   private normalize(vector: number[]): number[] {
-    const magnitude = Math.sqrt(vector.reduce((sum, value) => sum + value * value, 0));
+    const magnitude = Math.sqrt(
+      vector.reduce((sum, value) => sum + value * value, 0),
+    );
 
     if (magnitude === 0) {
       return vector;

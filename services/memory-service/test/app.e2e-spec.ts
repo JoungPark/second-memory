@@ -1,11 +1,14 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
 import { FirebaseAuthService } from '@second-memory/nest-auth';
-import { UsersService } from '@second-memory/server-db';
+import { PrismaClient, UsersService } from '@second-memory/server-db';
 import { AppModule } from '../src/app.module';
-import { EmbeddingService } from '../src/embedding/embedding.service';
+import {
+  EmbeddingService,
+  EmbeddingUnavailableError,
+} from '../src/embedding/embedding.service';
+import { OutboxRelayService } from '../src/queue/outbox-relay.service';
 import { disconnectDatabase, resetDatabase } from './test-database';
 
 const prisma = new PrismaClient();
@@ -14,17 +17,18 @@ describe('MemoryService (e2e)', () => {
   let app: INestApplication;
 
   beforeEach(async () => {
-    delete process.env.EMBEDDING_STORAGE_MODE;
+    process.env.EMBEDDING_STORAGE_MODE = 'worker';
     await resetDatabase();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [AppModule.forProfile('server')],
     })
       .overrideProvider(FirebaseAuthService)
       .useFactory({
         factory: (usersService: UsersService) => ({
           verifyIdToken: jest.fn(async (token: string) => {
-            const resolved = await usersService.findOrCreateByFirebaseUid(token);
+            const resolved =
+              await usersService.findOrCreateByFirebaseUid(token);
             return {
               firebaseUid: token,
               tenantId: resolved.tenantId,
@@ -34,6 +38,8 @@ describe('MemoryService (e2e)', () => {
         }),
         inject: [UsersService],
       })
+      .overrideProvider(OutboxRelayService)
+      .useValue({ relayPendingEvents: jest.fn().mockResolvedValue(0) })
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -57,14 +63,11 @@ describe('MemoryService (e2e)', () => {
   });
 
   it('GET /health returns ok', () => {
-    return request(app.getHttpServer())
-      .get('/health')
-      .expect(200)
-      .expect({
-        status: 'ok',
-        service: 'memory-service',
-        database: 'ok',
-      });
+    return request(app.getHttpServer()).get('/health').expect(200).expect({
+      status: 'ok',
+      service: 'memory-service',
+      database: 'ok',
+    });
   });
 
   it('POST /v1/memories creates a memory when auth headers are present', async () => {
@@ -137,20 +140,23 @@ describe('MemoryService (e2e)', () => {
 
 describe('MemoryService inline storage mode (e2e)', () => {
   let app: INestApplication;
-  const inlineVector = Array.from({ length: 1536 }, (_, index) => (index === 0 ? 1 : 0));
+  const inlineVector = Array.from({ length: 1536 }, (_, index) =>
+    index === 0 ? 1 : 0,
+  );
 
   beforeEach(async () => {
     process.env.EMBEDDING_STORAGE_MODE = 'inline';
     await resetDatabase();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [AppModule.forProfile('lambda-web')],
     })
       .overrideProvider(FirebaseAuthService)
       .useFactory({
         factory: (usersService: UsersService) => ({
           verifyIdToken: jest.fn(async (token: string) => {
-            const resolved = await usersService.findOrCreateByFirebaseUid(token);
+            const resolved =
+              await usersService.findOrCreateByFirebaseUid(token);
             return {
               firebaseUid: token,
               tenantId: resolved.tenantId,
@@ -207,5 +213,47 @@ describe('MemoryService inline storage mode (e2e)', () => {
 
     expect(outboxEvents).toHaveLength(0);
     expect(embedding).toHaveLength(1);
+  });
+
+  it('keeps capture idempotent and isolates entries by account', async () => {
+    const payload = {
+      entryType: 'note',
+      content: 'One capture',
+      idempotencyKey: 'retry-test',
+    };
+    const capture = () =>
+      request(app.getHttpServer())
+        .post('/v1/memories')
+        .set('Authorization', 'Bearer firebase-user-owner')
+        .send(payload)
+        .expect(201);
+
+    const first = await capture();
+    const retry = await capture();
+    expect(retry.body).toEqual(first.body);
+    expect(await prisma.entry.count()).toBe(1);
+    await request(app.getHttpServer())
+      .get('/v1/memories')
+      .set('Authorization', 'Bearer firebase-user-other')
+      .expect(200)
+      .expect({ items: [] });
+  });
+
+  it('returns 503 without writing an entry when embeddings are unavailable', async () => {
+    jest
+      .mocked(app.get(EmbeddingService).embedText)
+      .mockRejectedValueOnce(
+        new EmbeddingUnavailableError('Provider timed out'),
+      );
+
+    await request(app.getHttpServer())
+      .post('/v1/memories')
+      .set('Authorization', 'Bearer firebase-user-timeout')
+      .send({ entryType: 'note', content: 'Capture interrupted by timeout' })
+      .expect(503);
+
+    expect(await prisma.entry.count()).toBe(0);
+    expect(await prisma.entryEmbedding.count()).toBe(0);
+    expect(await prisma.outboxEvent.count()).toBe(0);
   });
 });
