@@ -4,6 +4,7 @@ export type { VerifiedFirebaseToken } from './firebase-auth.service';
 export { FirebaseAuthGuard } from './guards/firebase-auth.guard';
 export { InternalRequestContextGuard } from './guards/internal-request-context.guard';
 export { ReqContext } from './context/request-context.decorator';
+export { extractBearerToken, readHeader } from './context/header-utils';
 export {
   AUTHORIZATION_HEADER,
   REQUEST_CONTEXT_HEADERS,

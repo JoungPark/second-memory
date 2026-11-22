@@ -5,7 +5,7 @@ NestJS RAG/chat orchestration service for Second Memory (Milestone B).
 ## Responsibilities
 
 - Authenticate users via Firebase ID tokens
-- Maintain in-memory ask sessions with TTL
+- Maintain ask sessions with a sliding TTL
 - Retrieve memories from Memory Service for grounding
 - Call an OpenAI-compatible LLM to compose answers with citations
 
@@ -76,7 +76,7 @@ Response:
 
 ### `GET /health`
 
-Returns service and database health.
+Returns HTTP 200 with `{"status":"ok","service":"ask-service"}` when the process is serving requests.
 
 ## LLM providers
 
@@ -110,6 +110,8 @@ curl -X POST http://localhost:3002/v1/ask/messages \
 
 ## Notes
 
-- Ask sessions are stored in memory only and are lost on service restart.
-- Milestone B does not include `POST /v1/ask/end` or client SDK wiring.
+- Standalone sessions live in process memory. Lambda sessions use a dedicated ephemeral Valkey store shared by execution environments.
+- `POST /v1/ask/end` saves a conversation summary and removes the session. `POST /v1/ask/close` discards the session.
 - Memory search uses vector similarity via memory-service (keyword fallback when embeddings are unavailable or not yet indexed).
+
+See the [AWS deployment instructions](../../infra/aws/README.md#ask-service) for the Lambda profile.

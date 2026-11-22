@@ -23,6 +23,9 @@ export function configureHttp(
     }),
   );
 
+  if (profile === 'lambda-web-internal') {
+    return;
+  }
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Memory Service')
     .setVersion('0.1.0')

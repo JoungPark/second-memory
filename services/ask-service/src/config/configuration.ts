@@ -10,6 +10,8 @@ export default () => ({
       .filter(Boolean),
   },
   memoryServiceUrl: process.env.MEMORY_SERVICE_URL ?? 'http://localhost:3001',
+  awsRegion: process.env.AWS_REGION,
+  lambdaWeb: process.env.AWS_LAMBDA_HTTP_ENDPOINT !== undefined,
   llm: {
     baseUrl: process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1',
     apiKey: process.env.OPENAI_API_KEY ?? '',
@@ -17,6 +19,10 @@ export default () => ({
     temperature: parseFloat(process.env.OPENAI_TEMPERATURE ?? '0.2'),
   },
   session: {
+    cacheHost: process.env.SESSION_CACHE_HOST,
+    cachePort: Number(process.env.SESSION_CACHE_PORT),
+    cacheName: process.env.SESSION_CACHE_NAME,
+    cacheUser: process.env.SESSION_CACHE_USER,
     ttlMs: parseInt(process.env.SESSION_TTL_MS ?? '3600000', 10),
     cleanupIntervalMs: parseInt(process.env.SESSION_CLEANUP_INTERVAL_MS ?? '300000', 10),
   },

@@ -75,6 +75,15 @@ export interface SearchMemoriesResponse {
   results: SearchMemoryResult[];
 }
 
+export interface ResolveIdentityRequest {
+  idToken: string;
+}
+
+export interface ResolveIdentityResponse {
+  tenantId: string;
+  userId: string;
+}
+
 export interface RequestContext {
   tenantId: string;
   userId: string;

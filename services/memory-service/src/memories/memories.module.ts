@@ -12,15 +12,19 @@ import { MemoriesService } from './memories.service';
 
 @Module({
   imports: [QueueModule, EmbeddingModule],
-  controllers: [MemoriesController],
-  providers: [MemoriesService, MemoriesRepository, FirebaseAuthGuard],
+  providers: [MemoriesService, MemoriesRepository],
 })
 export class MemoriesModule {
-  static withInternalRoutes(): DynamicModule {
+  static forProfile(
+    profile: 'server' | 'lambda-web' | 'lambda-web-internal',
+  ): DynamicModule {
     return {
       module: MemoriesModule,
-      controllers: [InternalMemoriesController],
-      providers: [InternalRequestContextGuard],
+      controllers: [
+        ...(profile !== 'lambda-web-internal' ? [MemoriesController] : []),
+        ...(profile !== 'lambda-web' ? [InternalMemoriesController] : []),
+      ],
+      providers: [FirebaseAuthGuard, InternalRequestContextGuard],
     };
   }
 }

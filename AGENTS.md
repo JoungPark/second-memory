@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Rules
+
+- Evaluate the user's proposal independently. Point out any concrete problems and explain relevant alternatives when they exist.
+
 ## Repository map
 
 Second Memory is a pnpm workspace managed by Turborepo. Run workspace commands from the repository root and use the pnpm version pinned in `package.json`.
@@ -23,4 +27,4 @@ Second Memory is a pnpm workspace managed by Turborepo. Run workspace commands f
 - Keep Prisma schema changes and their migrations under `packages/server-db/prisma`. Check embedding dimensions across the database and embedding producers when changing models. The current schema expects 1536 dimensions and the optional local worker produces 384.
 - Use workspace `.env.example` files to document configuration and keep local credentials out of Git.
 - Each service owns its database. Keep cross-service access behind the service API.
-- Put shared API contracts in `packages/api-types`.
+- Put shared API contracts in `packages/shared-types`.

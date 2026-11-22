@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type {
   AskCitation,
@@ -13,7 +13,7 @@ import type {
 import { OpenAiCompatibleService } from '../llm/openai-compatible.service';
 import type { ChatMessage } from '../llm/llm.types';
 import { MemoryClientService } from '../memory/memory-client.service';
-import { SessionStoreService } from '../sessions/session-store.service';
+import { SessionStore } from '../sessions/session-store';
 import { buildSummaryPrompt, buildSystemPrompt, truncateExcerpt } from './prompts';
 
 const DEFAULT_TOP_K = 5;
@@ -25,99 +25,93 @@ export class AskService {
   constructor(
     private readonly configService: ConfigService,
     private readonly memoryClient: MemoryClientService,
-    private readonly sessionStore: SessionStoreService,
+    private readonly sessionStore: SessionStore,
     private readonly llmService: OpenAiCompatibleService,
   ) {
     this.confidenceThreshold = this.configService.get<number>('confidenceThreshold', 0.35);
   }
 
-  async sendMessage(
-    context: RequestContext,
-    request: AskMessageRequest,
-  ): Promise<AskMessageResponse> {
-    const session = this.sessionStore.resolveSession(context, request.sessionId);
-    const topK = Math.min(Math.max(request.topK ?? DEFAULT_TOP_K, 1), 50);
+  async sendMessage(context: RequestContext, request: AskMessageRequest): Promise<AskMessageResponse> {
+    return this.sessionStore.withSession(context, request.sessionId, async ({ state, save }) => {
+      if (state.pendingSummary) {
+        throw new ConflictException('A summary save is pending');
+      }
+      const topK = Math.min(Math.max(request.topK ?? DEFAULT_TOP_K, 1), 50);
 
-    const searchResponse = await this.memoryClient.searchMemories(context, {
-      query: request.message,
-      topK,
-      filters: request.filters,
+      const searchResponse = await this.memoryClient.searchMemories(context, {
+        query: request.message,
+        topK,
+        filters: request.filters,
+      });
+
+      const confidence = this.computeConfidence(searchResponse.results);
+      const lowConfidenceFlag = confidence < this.confidenceThreshold;
+      const citations = this.buildCitations(searchResponse.results);
+      const messages = this.buildChatMessages(state.turns, request.message, searchResponse.results, lowConfidenceFlag);
+
+      const completion = await this.llmService.chat(messages);
+
+      state.turns.push(
+        {
+          role: 'user',
+          content: request.message,
+        },
+        {
+          role: 'assistant',
+          content: completion.content,
+          citedMemoryIds: citations.map((citation) => citation.memoryId),
+        },
+      );
+      await save();
+
+      return {
+        sessionId: state.sessionId,
+        answer: completion.content,
+        citations,
+        confidence,
+        lowConfidenceFlag,
+      };
     });
-
-    const confidence = this.computeConfidence(searchResponse.results);
-    const lowConfidenceFlag = confidence < this.confidenceThreshold;
-    const citations = this.buildCitations(searchResponse.results);
-    const messages = this.buildChatMessages(
-      session.turns,
-      request.message,
-      searchResponse.results,
-      lowConfidenceFlag,
-    );
-
-    const completion = await this.llmService.chat(messages);
-
-    this.sessionStore.appendTurn(session, {
-      role: 'user',
-      content: request.message,
-    });
-    this.sessionStore.appendTurn(session, {
-      role: 'assistant',
-      content: completion.content,
-      citedMemoryIds: citations.map((citation) => citation.memoryId),
-    });
-
-    return {
-      sessionId: session.sessionId,
-      answer: completion.content,
-      citations,
-      confidence,
-      lowConfidenceFlag,
-    };
   }
 
-  async endSession(
-    context: RequestContext,
-    request: AskEndRequest,
-  ): Promise<AskEndResponse> {
-    const session = this.sessionStore.resolveSession(context, request.sessionId);
+  async endSession(context: RequestContext, request: AskEndRequest): Promise<AskEndResponse> {
+    return this.sessionStore.withSession(context, request.sessionId, async ({ state, save, remove }) => {
+      if (state.turns.length === 0) {
+        throw new BadRequestException('Cannot save an empty conversation');
+      }
 
-    if (session.turns.length === 0) {
-      throw new BadRequestException('Cannot save an empty conversation');
-    }
+      if (!state.pendingSummary) {
+        const completion = await this.llmService.chat([{ role: 'system', content: buildSummaryPrompt(state.turns) }]);
+        state.pendingSummary = {
+          text: completion.content.trim(),
+          references: this.collectSourceReferences(state.turns),
+        };
+        await save();
+      }
+      const { text: summaryText, references } = state.pendingSummary;
 
-    const completion = await this.llmService.chat([
-      {
-        role: 'system',
-        content: buildSummaryPrompt(session.turns),
-      },
-    ]);
+      const created = await this.memoryClient.createInternalMemory(context, {
+        entryType: 'conversation_summary',
+        content: summaryText,
+        sourceReferences: references,
+        idempotencyKey: state.sessionId,
+      });
 
-    const summaryText = completion.content.trim();
-    const references = this.collectSourceReferences(session.turns);
+      await remove();
 
-    const created = await this.memoryClient.createInternalMemory(context, {
-      entryType: 'conversation_summary',
-      content: summaryText,
-      sourceReferences: references,
-      idempotencyKey: session.sessionId,
+      return {
+        summaryId: created.id,
+        summaryText,
+        references,
+      };
     });
-
-    this.sessionStore.deleteSession(context, session.sessionId);
-
-    return {
-      summaryId: created.id,
-      summaryText,
-      references,
-    };
   }
 
-  closeSession(context: RequestContext, request: AskCloseRequest): void {
-    this.sessionStore.deleteSession(context, request.sessionId);
+  async closeSession(context: RequestContext, request: AskCloseRequest): Promise<void> {
+    await this.sessionStore.deleteSession(context, request.sessionId);
   }
 
-  private collectSourceReferences(
-    turns: Array<{ citedMemoryIds?: string[] }>,
-  ): string[] {
+  private collectSourceReferences(turns: Array<{ citedMemoryIds?: string[] }>): string[] {
     const references = new Set<string>();
 
     for (const turn of turns) {

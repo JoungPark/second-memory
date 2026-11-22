@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '../../prisma/generated';
 import { PrismaService } from '../database/prisma.service';
 
 export interface StoredUser {
@@ -27,21 +28,23 @@ export class UsersRepository {
       return existing;
     }
 
-    const user = await this.prisma.$transaction(async (tx) => {
-      const tenant = await tx.tenant.create({
-        data: {},
+    try {
+      const user = await this.prisma.$transaction(async (tx) => {
+        const tenant = await tx.tenant.create({ data: {} });
+        return tx.user.create({
+          data: { tenantId: tenant.id, firebaseUid, email },
+        });
       });
-
-      return tx.user.create({
-        data: {
-          tenantId: tenant.id,
-          firebaseUid,
-          email,
-        },
-      });
-    });
-
-    return this.toStoredUser(user);
+      return this.toStoredUser(user);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const winner = await this.findByFirebaseUid(firebaseUid);
+        if (winner) {
+          return winner;
+        }
+      }
+      throw error;
+    }
   }
 
   private toStoredUser(user: {

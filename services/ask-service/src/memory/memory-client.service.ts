@@ -8,62 +8,35 @@ import type {
   SearchMemoriesResponse,
 } from '@second-memory/shared-types';
 import { REQUEST_CONTEXT_HEADERS } from '@second-memory/nest-auth';
+import { InternalApiClient } from '../internal-api/internal-api-client';
 
 @Injectable()
 export class MemoryClientService {
-  private readonly memoryServiceUrl: string;
+  private readonly baseUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
-    this.memoryServiceUrl = this.configService
-      .get<string>('memoryServiceUrl', 'http://localhost:3001')
-      .replace(/\/$/, '');
+  constructor(
+    config: ConfigService,
+    private readonly internalApi: InternalApiClient,
+  ) {
+    this.baseUrl = config.get<string>('memoryServiceUrl', 'http://localhost:3001').replace(/\/$/, '');
   }
 
-  async searchMemories(
-    context: RequestContext,
-    request: SearchMemoriesRequest,
-  ): Promise<SearchMemoriesResponse> {
-    const response = await fetch(`${this.memoryServiceUrl}/internal/v1/memories/search`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        [REQUEST_CONTEXT_HEADERS.tenantId]: context.tenantId,
-        [REQUEST_CONTEXT_HEADERS.userId]: context.userId,
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const message = await response.text();
-      throw new ServiceUnavailableException(
-        `Memory service search failed (${response.status}): ${message}`,
-      );
-    }
-
-    return response.json() as Promise<SearchMemoriesResponse>;
+  searchMemories(context: RequestContext, request: SearchMemoriesRequest): Promise<SearchMemoriesResponse> {
+    return this.post('/internal/v1/memories/search', request, context);
   }
 
-  async createInternalMemory(
-    context: RequestContext,
-    request: CreateInternalMemoryRequest,
-  ): Promise<CreateMemoryResponse> {
-    const response = await fetch(`${this.memoryServiceUrl}/internal/v1/memories`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+  createInternalMemory(context: RequestContext, request: CreateInternalMemoryRequest): Promise<CreateMemoryResponse> {
+    return this.post('/internal/v1/memories', request, context);
+  }
+
+  private async post<T>(path: string, request: object, context: RequestContext): Promise<T> {
+    try {
+      return await this.internalApi.post(this.baseUrl + path, request, 25_000, {
         [REQUEST_CONTEXT_HEADERS.tenantId]: context.tenantId,
         [REQUEST_CONTEXT_HEADERS.userId]: context.userId,
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const message = await response.text();
-      throw new ServiceUnavailableException(
-        `Memory service create failed (${response.status}): ${message}`,
-      );
+      });
+    } catch {
+      throw new ServiceUnavailableException('Memory service unavailable');
     }
-
-    return response.json() as Promise<CreateMemoryResponse>;
   }
 }

@@ -82,7 +82,6 @@ describe('SessionStoreService', () => {
 
   it('deletes a session for the authenticated user', () => {
     const created = service.resolveSession(context);
-    service.appendTurn(created, { role: 'user', content: 'Hello' });
 
     service.deleteSession(context, created.sessionId);
 
@@ -92,7 +91,9 @@ describe('SessionStoreService', () => {
   });
 
   it('ignores delete when session is already missing', () => {
-    expect(() => service.deleteSession(context, 'missing-session')).not.toThrow();
+    expect(() =>
+      service.deleteSession(context, 'missing-session'),
+    ).not.toThrow();
   });
 
   it('rejects delete for another user session', () => {

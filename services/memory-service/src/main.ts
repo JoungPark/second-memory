@@ -2,16 +2,16 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { configureHttp } from './app-http';
-import {
-  loadLambdaWebSecrets,
-  readLambdaWebAddress,
-} from './config/lambda-web';
+import { loadLambdaWebSecrets, readLambdaWebAddress } from './config/lambda-web';
 
 async function bootstrap() {
   const webEndpoint = process.env.AWS_LAMBDA_HTTP_ENDPOINT;
-  const address =
-    webEndpoint === undefined ? undefined : readLambdaWebAddress(webEndpoint);
-  const profile = address ? 'lambda-web' : 'server';
+  const address = webEndpoint === undefined ? undefined : readLambdaWebAddress(webEndpoint);
+  const profile = address
+    ? process.env.MEMORY_SERVICE_PROFILE === 'internal'
+      ? 'lambda-web-internal'
+      : 'lambda-web'
+    : 'server';
   if (address) {
     await loadLambdaWebSecrets();
   }
@@ -28,8 +28,6 @@ async function bootstrap() {
 }
 
 void bootstrap().catch((error: unknown) => {
-  Logger.error(
-    error instanceof Error ? error.message : 'Memory service startup failed',
-  );
+  Logger.error(error instanceof Error ? error.message : 'Memory service startup failed');
   process.exitCode = 1;
 });

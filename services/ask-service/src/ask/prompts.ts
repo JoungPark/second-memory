@@ -1,5 +1,5 @@
 import type { SearchMemoryResult } from '@second-memory/shared-types';
-import type { SessionTurn } from '../sessions/session-store.service';
+import type { SessionTurn } from '../sessions/session-store';
 
 const EXCERPT_MAX_LENGTH = 200;
 

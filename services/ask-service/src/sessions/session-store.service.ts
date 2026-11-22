@@ -1,30 +1,51 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { randomUUID } from 'crypto';
 import type { RequestContext } from '@second-memory/shared-types';
-
-export interface SessionTurn {
-  role: 'user' | 'assistant';
-  content: string;
-  citedMemoryIds?: string[];
-}
-
-export interface SessionState {
-  sessionId: string;
-  tenantId: string;
-  userId: string;
-  turns: SessionTurn[];
-  expiresAt: number;
-}
+import type { SessionState, SessionStore, SessionTransaction } from './session-store';
 
 @Injectable()
-export class SessionStoreService {
+export class SessionStoreService implements SessionStore {
   private readonly sessions = new Map<string, SessionState>();
+  private readonly busy = new Set<string>();
   private readonly ttlMs: number;
 
   constructor(private readonly configService: ConfigService) {
     this.ttlMs = this.configService.get<number>('session.ttlMs', 3600000);
+  }
+
+  async withSession<T>(
+    context: RequestContext,
+    sessionId: string | undefined,
+    operation: (session: SessionTransaction) => Promise<T>,
+  ): Promise<T> {
+    const state = this.resolveSession(context, sessionId);
+    if (this.busy.has(state.sessionId)) {
+      throw new ConflictException('Another session operation is in progress');
+    }
+    this.busy.add(state.sessionId);
+    try {
+      return await operation({
+        state,
+        save: () => {
+          state.expiresAt = Date.now() + this.ttlMs;
+          this.sessions.set(state.sessionId, state);
+          return Promise.resolve();
+        },
+        remove: () => {
+          this.sessions.delete(state.sessionId);
+          return Promise.resolve();
+        },
+      });
+    } finally {
+      this.busy.delete(state.sessionId);
+    }
   }
 
   resolveSession(context: RequestContext, sessionId?: string): SessionState {
@@ -33,14 +54,18 @@ export class SessionStoreService {
     if (sessionId) {
       const existing = this.sessions.get(sessionId);
       if (!existing) {
-        throw new NotFoundException(`Session ${sessionId} not found or expired`);
+        throw new NotFoundException(
+          `Session ${sessionId} not found or expired`,
+        );
       }
 
       if (
         existing.tenantId !== context.tenantId ||
         existing.userId !== context.userId
       ) {
-        throw new ForbiddenException('Session does not belong to the authenticated user');
+        throw new ForbiddenException(
+          'Session does not belong to the authenticated user',
+        );
       }
 
       existing.expiresAt = Date.now() + this.ttlMs;
@@ -59,12 +84,6 @@ export class SessionStoreService {
     return created;
   }
 
-  appendTurn(session: SessionState, turn: SessionTurn): void {
-    session.turns.push(turn);
-    session.expiresAt = Date.now() + this.ttlMs;
-    this.sessions.set(session.sessionId, session);
-  }
-
   deleteSession(context: RequestContext, sessionId: string): void {
     this.evictExpiredSessions();
 
@@ -77,9 +96,14 @@ export class SessionStoreService {
       existing.tenantId !== context.tenantId ||
       existing.userId !== context.userId
     ) {
-      throw new ForbiddenException('Session does not belong to the authenticated user');
+      throw new ForbiddenException(
+        'Session does not belong to the authenticated user',
+      );
     }
 
+    if (this.busy.has(sessionId)) {
+      throw new ConflictException('Another session operation is in progress');
+    }
     this.sessions.delete(sessionId);
   }
 

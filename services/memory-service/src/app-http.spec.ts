@@ -82,6 +82,7 @@ describe('Lambda Web HTTP profile', () => {
     for (const path of [
       '/internal/v1/memories',
       '/internal/v1/memories/search',
+      '/internal/v1/auth/resolve',
     ]) {
       await http
         .post(path)
@@ -114,5 +115,48 @@ describe('Lambda Web HTTP profile', () => {
     expect(document.paths['/v1/memories']?.post?.security).toEqual([
       { firebase: [] },
     ]);
+  });
+});
+
+describe('Internal memory HTTP profile', () => {
+  it('resolves Firebase identity and exposes only the internal routes', async () => {
+    const resolveIdentity = jest
+      .fn()
+      .mockResolvedValueOnce({
+        firebaseUid: 'firebase',
+        tenantId: 'tenant',
+        userId: 'user',
+      })
+      .mockRejectedValueOnce(new Error('database unavailable'));
+    const module = await Test.createTestingModule({
+      imports: [AppModule.forProfile('lambda-web-internal')],
+    })
+      .overrideProvider(FirebaseAuthService)
+      .useValue({ resolveIdentity })
+      .compile();
+    const app = module.createNestApplication();
+    configureHttp(app, 'lambda-web-internal');
+    await app.init();
+    try {
+      const http = request(app.getHttpServer());
+      await http
+        .post('/internal/v1/auth/resolve')
+        .send({ idToken: 'test' })
+        .expect(200, { tenantId: 'tenant', userId: 'user' });
+      await http
+        .post('/internal/v1/auth/resolve')
+        .send({ idToken: 'test' })
+        .expect(503);
+      await http.post('/internal/v1/auth/resolve').send({}).expect(400);
+      await http.post('/internal/v1/memories').send({}).expect(400);
+      await http
+        .post('/internal/v1/memories/search')
+        .send({ query: 'test' })
+        .expect(400);
+      await http.get('/v1/memories').expect(404);
+      await http.get('/docs-json').expect(404);
+    } finally {
+      await app.close();
+    }
   });
 });

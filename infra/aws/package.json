@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "build:zip:memory": "docker buildx build --platform linux/arm64 --file memory-service.Dockerfile --output type=local,dest=dist/assets ../..",
+    "build:zip:ask": "docker buildx build --platform linux/arm64 --file ask-service.Dockerfile --output type=local,dest=dist/assets ../..",
+    "build:zips": "pnpm run build:zip:memory && pnpm run build:zip:ask",
     "lint": "eslint bin lib",
     "cdk": "cdk"
   },

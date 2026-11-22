@@ -13,9 +13,6 @@ interface OpenAiChatCompletionResponse {
     completion_tokens?: number;
     total_tokens?: number;
   };
-  error?: {
-    message?: string;
-  };
 }
 
 @Injectable()
@@ -25,14 +22,14 @@ export class OpenAiCompatibleService {
   private readonly apiKey: string;
   private readonly model: string;
   private readonly temperature: number;
+  private readonly lambdaWeb: boolean;
 
   constructor(private readonly configService: ConfigService) {
-    this.baseUrl = this.configService
-      .get<string>('llm.baseUrl', 'https://api.openai.com/v1')
-      .replace(/\/$/, '');
+    this.baseUrl = this.configService.get<string>('llm.baseUrl', 'https://api.openai.com/v1').replace(/\/$/, '');
     this.apiKey = this.configService.get<string>('llm.apiKey', '');
     this.model = this.configService.get<string>('llm.model', 'gpt-4o-mini');
     this.temperature = this.configService.get<number>('llm.temperature', 0.2);
+    this.lambdaWeb = this.configService.get<boolean>('lambdaWeb', false);
   }
 
   async chat(messages: ChatMessage[]): Promise<ChatCompletionResult> {
@@ -44,21 +41,25 @@ export class OpenAiCompatibleService {
       headers.Authorization = `Bearer ${this.apiKey}`;
     }
 
-    const response = await fetch(`${this.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model: this.model,
-        messages,
-        temperature: this.temperature,
-      }),
-    });
-
-    const payload = (await response.json()) as OpenAiChatCompletionResponse;
-
-    if (!response.ok) {
-      const message = payload.error?.message ?? response.statusText;
-      throw new ServiceUnavailableException(`LLM request failed (${response.status}): ${message}`);
+    let payload: OpenAiChatCompletionResponse;
+    try {
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: this.model,
+          messages,
+          temperature: this.temperature,
+        }),
+        ...(this.lambdaWeb ? { signal: AbortSignal.timeout(25_000), redirect: 'error' as const } : {}),
+      });
+      if (!response.ok) {
+        await response.body?.cancel();
+        throw new Error();
+      }
+      payload = (await response.json()) as OpenAiChatCompletionResponse;
+    } catch {
+      throw new ServiceUnavailableException('LLM request failed');
     }
 
     const content = payload.choices?.[0]?.message?.content?.trim();

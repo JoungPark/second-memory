@@ -22,19 +22,32 @@ export class FirebaseAuthService {
     this.ensureInitialized();
 
     try {
-      const decoded = await admin.auth().verifyIdToken(idToken);
-      const { tenantId, userId } = await this.usersService.findOrCreateByFirebaseUid(
-        decoded.uid,
-        decoded.email,
-      );
-
-      return {
-        firebaseUid: decoded.uid,
-        tenantId,
-        userId,
-      };
+      return await this.resolveIdentity(idToken);
     } catch {
       throw new UnauthorizedException('Invalid or expired Firebase ID token');
+    }
+  }
+
+  async resolveIdentity(idToken: string): Promise<VerifiedFirebaseToken> {
+    const decoded = await this.decodeIdToken(idToken);
+    const { tenantId, userId } = await this.usersService.findOrCreateByFirebaseUid(decoded.uid, decoded.email);
+    return { firebaseUid: decoded.uid, tenantId, userId };
+  }
+
+  private async decodeIdToken(idToken: string): Promise<admin.auth.DecodedIdToken> {
+    try {
+      return await admin.auth().verifyIdToken(idToken);
+    } catch (error) {
+      const code = (error as { code?: string } | undefined)?.code;
+      if (
+        code === 'auth/argument-error' ||
+        code === 'auth/id-token-expired' ||
+        code === 'auth/invalid-id-token' ||
+        code === 'auth/id-token-revoked'
+      ) {
+        throw new UnauthorizedException('Invalid or expired Firebase ID token');
+      }
+      throw error;
     }
   }
 
