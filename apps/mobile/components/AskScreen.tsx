@@ -1,9 +1,4 @@
-import {
-  type AppMode,
-  useAskChat,
-  useBackendHealth,
-  type ChatMessage,
-} from '@second-memory/ui';
+import { useAskChat, type ChatMessage } from '@second-memory/ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
@@ -47,11 +42,7 @@ function AssistantMessageMeta({ message }: { message: ChatMessage }) {
   );
 }
 
-type AskScreenProps = {
-  mode: AppMode;
-};
-
-export function AskScreen({ mode }: AskScreenProps) {
+export function AskScreen() {
   const {
     messages,
     sendMessage,
@@ -64,8 +55,6 @@ export function AskScreen({ mode }: AskScreenProps) {
     phase,
     summaryText,
   } = useAskChat();
-  const { canSend, status } = useBackendHealth();
-  const sendEnabled = canSend(mode);
   const [text, setText] = useState('');
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const insets = useSafeAreaInsets();
@@ -74,8 +63,7 @@ export function AskScreen({ mode }: AskScreenProps) {
     Platform.OS === 'android'
       ? 16 + keyboardBottomInset
       : Math.max(insets.bottom, 16);
-  const sessionActionsEnabled =
-    hasConversation && !submitting && !saving && sendEnabled;
+  const sessionActionsEnabled = hasConversation && !submitting && !saving;
   const isSummaryPhase = phase === 'summary';
 
   const scrollToLatest = useCallback((animated = true) => {
@@ -94,7 +82,7 @@ export function AskScreen({ mode }: AskScreenProps) {
 
   async function handleSend() {
     const trimmed = text.trim();
-    if (!trimmed || submitting || saving || !sendEnabled || isSummaryPhase) {
+    if (!trimmed || submitting || saving || isSummaryPhase) {
       return;
     }
 
@@ -209,21 +197,11 @@ export function AskScreen({ mode }: AskScreenProps) {
               returnKeyType="send"
             />
             <Pressable
-              style={[
-                styles.sendButton,
-                (!text.trim() || submitting || saving || !sendEnabled) &&
-                  styles.sendButtonDisabled,
-              ]}
-              disabled={!text.trim() || submitting || saving || !sendEnabled}
+              style={[styles.sendButton, (!text.trim() || submitting || saving) && styles.sendButtonDisabled]}
+              disabled={!text.trim() || submitting || saving}
               onPress={() => void handleSend()}
             >
-              <Text style={styles.sendButtonText}>
-                {submitting
-                  ? 'Sending…'
-                  : status === 'checking'
-                    ? 'Checking…'
-                    : 'Send'}
-              </Text>
+              <Text style={styles.sendButtonText}>{submitting ? 'Sending…' : 'Send'}</Text>
             </Pressable>
           </View>
         ) : null}

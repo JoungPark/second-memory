@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  type AppMode,
-  useAskChat,
-  useBackendHealth,
-  type ChatMessage,
-} from '@second-memory/ui';
+import { useAskChat, type ChatMessage } from '@second-memory/ui';
 import { useEffect, useRef, useState } from 'react';
 
 function AssistantMessageMeta({ message }: { message: ChatMessage }) {
@@ -38,11 +33,7 @@ function AssistantMessageMeta({ message }: { message: ChatMessage }) {
   );
 }
 
-type AskScreenProps = {
-  mode: AppMode;
-};
-
-export function AskScreen({ mode }: AskScreenProps) {
+export function AskScreen() {
   const {
     messages,
     sendMessage,
@@ -55,12 +46,9 @@ export function AskScreen({ mode }: AskScreenProps) {
     phase,
     summaryText,
   } = useAskChat();
-  const { canSend, status } = useBackendHealth();
-  const sendEnabled = canSend(mode);
   const [text, setText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const sessionActionsEnabled =
-    hasConversation && !submitting && !saving && sendEnabled;
+  const sessionActionsEnabled = hasConversation && !submitting && !saving;
   const isSummaryPhase = phase === 'summary';
 
   useEffect(() => {
@@ -73,7 +61,7 @@ export function AskScreen({ mode }: AskScreenProps) {
 
   async function handleSend() {
     const trimmed = text.trim();
-    if (!trimmed || submitting || saving || !sendEnabled || isSummaryPhase) {
+    if (!trimmed || submitting || saving || isSummaryPhase) {
       return;
     }
 
@@ -157,14 +145,10 @@ export function AskScreen({ mode }: AskScreenProps) {
             <button
               type="button"
               onClick={() => void handleSend()}
-              disabled={!text.trim() || submitting || saving || !sendEnabled}
+              disabled={!text.trim() || submitting || saving}
               className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
             >
-              {submitting
-                ? 'Sending…'
-                : status === 'checking'
-                  ? 'Checking…'
-                  : 'Send'}
+              {submitting ? 'Sending…' : 'Send'}
             </button>
           </div>
         ) : null}

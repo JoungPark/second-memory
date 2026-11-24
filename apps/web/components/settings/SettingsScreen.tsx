@@ -3,7 +3,6 @@
 import type { User } from 'firebase/auth';
 
 import { SettingsSection } from '@/components/settings/SettingsSection';
-import { WakeBackendSection } from '@/components/settings/WakeBackendSection';
 
 type SettingsScreenProps = {
   user: User;
@@ -30,10 +29,6 @@ export function SettingsScreen({ user, onBack }: SettingsScreenProps) {
         <SettingsSection title="Account">
           <p className="text-sm font-medium text-zinc-900">{displayName}</p>
           {user.email ? <p className="mt-0.5 text-sm text-zinc-500">{user.email}</p> : null}
-        </SettingsSection>
-
-        <SettingsSection title="Backend">
-          <WakeBackendSection />
         </SettingsSection>
       </div>
     </div>

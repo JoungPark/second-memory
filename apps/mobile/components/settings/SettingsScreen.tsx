@@ -2,7 +2,6 @@ import type { User } from 'firebase/auth';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { SettingsSection } from '@/components/settings/SettingsSection';
-import { WakeBackendSection } from '@/components/settings/WakeBackendSection';
 
 type SettingsScreenProps = {
   user: User;
@@ -29,10 +28,6 @@ export function SettingsScreen({ user, onBack }: SettingsScreenProps) {
         <SettingsSection title="Account">
           <Text style={styles.accountName}>{displayName}</Text>
           {user.email ? <Text style={styles.accountEmail}>{user.email}</Text> : null}
-        </SettingsSection>
-
-        <SettingsSection title="Backend">
-          <WakeBackendSection />
         </SettingsSection>
       </ScrollView>
     </View>

@@ -2,17 +2,6 @@ export { AuthProvider, useAuth } from './auth/AuthProvider';
 export { LoginButton, type LoginButtonRenderProps } from './auth/LoginButton';
 export { MemoryApiProvider, useMemoryApi } from './api/MemoryApiProvider';
 export { AskApiProvider, useAskApi } from './api/AskApiProvider';
-export {
-  BackendHealthProvider,
-  useBackendHealth,
-} from './api/BackendHealthProvider';
-export {
-  canSendForMode,
-  deriveStatus,
-  getRequiredService,
-  isServiceHealthy,
-  type BackendHealthStatus,
-} from './api/backend-health-utils';
 export { useAskChat, type AskChatPhase } from './api/useAskChat';
 export { useRecentMemories } from './api/useRecentMemories';
 export { SharedWelcome, type SharedWelcomeProps } from './SharedWelcome';

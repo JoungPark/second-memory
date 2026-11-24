@@ -1,9 +1,4 @@
-import {
-  type AppMode,
-  useBackendHealth,
-  useMemoryApi,
-  useRecentMemories,
-} from '@second-memory/ui';
+import { useMemoryApi, useRecentMemories } from '@second-memory/ui';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,15 +15,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScreen } from '@/components/KeyboardAwareScreen';
 import { useKeyboardBottomInset } from '@/lib/useKeyboardBottomInset';
 
-type SelfTalkScreenProps = {
-  mode: AppMode;
-};
-
-export function SelfTalkScreen({ mode }: SelfTalkScreenProps) {
+export function SelfTalkScreen() {
   const memoryApi = useMemoryApi();
   const recent = useRecentMemories();
-  const { canSend, status } = useBackendHealth();
-  const sendEnabled = canSend(mode);
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +30,7 @@ export function SelfTalkScreen({ mode }: SelfTalkScreenProps) {
 
   async function handleSend() {
     const trimmed = text.trim();
-    if (!trimmed || submitting || !sendEnabled) {
+    if (!trimmed || submitting) {
       return;
     }
 
@@ -138,19 +127,14 @@ export function SelfTalkScreen({ mode }: SelfTalkScreenProps) {
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <View style={styles.actions}>
           <Pressable
-            style={[
-              styles.button,
-              (!text.trim() || submitting || !sendEnabled) && styles.buttonDisabled,
-            ]}
-            disabled={!text.trim() || submitting || !sendEnabled}
+            style={[styles.button, (!text.trim() || submitting) && styles.buttonDisabled]}
+            disabled={!text.trim() || submitting}
             onPress={() => void handleSend()}
           >
             {submitting ? (
               <ActivityIndicator size="small" color="#ffffff" />
             ) : (
-              <Text style={styles.buttonText}>
-                {status === 'checking' ? 'Checking…' : 'Send'}
-              </Text>
+              <Text style={styles.buttonText}>Send</Text>
             )}
           </Pressable>
         </View>
