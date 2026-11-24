@@ -1,6 +1,7 @@
 import { ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import configuration from '../config/configuration';
 import { OpenAiCompatibleService } from './openai-compatible.service';
 
 describe('OpenAiCompatibleService', () => {
@@ -22,7 +23,6 @@ describe('OpenAiCompatibleService', () => {
                 'llm.baseUrl': 'https://example.test/v1',
                 'llm.apiKey': 'test-key',
                 'llm.model': 'test-model',
-                'llm.temperature': 0.2,
               };
 
               return values[key] ?? defaultValue;
@@ -68,10 +68,27 @@ describe('OpenAiCompatibleService', () => {
             { role: 'system', content: 'You are helpful.' },
             { role: 'user', content: 'Hello' },
           ],
-          temperature: 0.2,
         }),
       }),
     );
+  });
+
+  it('defaults to GPT-6 Luna and omits temperature', async () => {
+    const environment = jest.replaceProperty(process, 'env', { ...process.env });
+    delete process.env.OPENAI_MODEL;
+    try {
+      const configuredService = new OpenAiCompatibleService(new ConfigService(configuration()));
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content: 'Grounded answer' } }] }),
+      });
+      const messages = [{ role: 'user' as const, content: 'Hello' }];
+
+      await expect(configuredService.chat(messages)).resolves.toMatchObject({ content: 'Grounded answer' });
+      expect(fetchMock.mock.calls[0][1].body).toBe(JSON.stringify({ model: 'gpt-6-luna', messages }));
+    } finally {
+      environment.restore();
+    }
   });
 
   it('throws when the LLM request fails', async () => {
@@ -82,8 +99,8 @@ describe('OpenAiCompatibleService', () => {
       json: async () => ({ error: { message: 'model unavailable' } }),
     });
 
-    await expect(
-      service.chat([{ role: 'user', content: 'Hello' }]),
-    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    await expect(service.chat([{ role: 'user', content: 'Hello' }])).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
   });
 });

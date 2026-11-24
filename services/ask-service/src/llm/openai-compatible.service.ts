@@ -1,5 +1,6 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { DEFAULT_CHAT_MODEL } from '../config/configuration';
 import type { ChatCompletionResult, ChatMessage } from './llm.types';
 
 interface OpenAiChatCompletionResponse {
@@ -21,14 +22,12 @@ export class OpenAiCompatibleService {
   private readonly baseUrl: string;
   private readonly apiKey: string;
   private readonly model: string;
-  private readonly temperature: number;
   private readonly lambdaWeb: boolean;
 
   constructor(private readonly configService: ConfigService) {
     this.baseUrl = this.configService.get<string>('llm.baseUrl', 'https://api.openai.com/v1').replace(/\/$/, '');
     this.apiKey = this.configService.get<string>('llm.apiKey', '');
-    this.model = this.configService.get<string>('llm.model', 'gpt-4o-mini');
-    this.temperature = this.configService.get<number>('llm.temperature', 0.2);
+    this.model = this.configService.get<string>('llm.model', DEFAULT_CHAT_MODEL);
     this.lambdaWeb = this.configService.get<boolean>('lambdaWeb', false);
   }
 
@@ -49,7 +48,6 @@ export class OpenAiCompatibleService {
         body: JSON.stringify({
           model: this.model,
           messages,
-          temperature: this.temperature,
         }),
         ...(this.lambdaWeb ? { signal: AbortSignal.timeout(25_000), redirect: 'error' as const } : {}),
       });

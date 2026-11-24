@@ -86,7 +86,7 @@ The service uses a thin OpenAI-compatible client. Examples:
 # OpenAI cloud
 OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o-mini
+OPENAI_MODEL=gpt-6-luna
 
 # Groq
 OPENAI_BASE_URL=https://api.groq.com/openai/v1

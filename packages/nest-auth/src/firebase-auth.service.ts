@@ -29,6 +29,7 @@ export class FirebaseAuthService {
   }
 
   async resolveIdentity(idToken: string): Promise<VerifiedFirebaseToken> {
+    this.ensureInitialized();
     const decoded = await this.decodeIdToken(idToken);
     const { tenantId, userId } = await this.usersService.findOrCreateByFirebaseUid(decoded.uid, decoded.email);
     return { firebaseUid: decoded.uid, tenantId, userId };

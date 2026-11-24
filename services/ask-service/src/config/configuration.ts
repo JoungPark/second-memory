@@ -1,3 +1,5 @@
+export const DEFAULT_CHAT_MODEL = 'gpt-6-luna';
+
 export default () => ({
   port: parseInt(process.env.PORT ?? '3002', 10),
   firebase: {
@@ -15,8 +17,7 @@ export default () => ({
   llm: {
     baseUrl: process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1',
     apiKey: process.env.OPENAI_API_KEY ?? '',
-    model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
-    temperature: parseFloat(process.env.OPENAI_TEMPERATURE ?? '0.2'),
+    model: process.env.OPENAI_MODEL ?? DEFAULT_CHAT_MODEL,
   },
   session: {
     cacheHost: process.env.SESSION_CACHE_HOST,

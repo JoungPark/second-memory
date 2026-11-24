@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { OpenAPIObject } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
 import { PrismaService } from '@second-memory/server-db';
@@ -119,6 +120,23 @@ describe('Lambda Web HTTP profile', () => {
 });
 
 describe('Internal memory HTTP profile', () => {
+  it('returns 401 for a malformed token on the first identity request', async () => {
+    const module = await Test.createTestingModule({
+      imports: [AppModule.forProfile('lambda-web-internal')],
+    })
+      .overrideProvider(ConfigService)
+      .useValue(new ConfigService({ firebase: { projectId: 'cold-start-test' } }))
+      .compile();
+    const app = module.createNestApplication();
+    configureHttp(app, 'lambda-web-internal');
+    await app.init();
+    try {
+      await request(app.getHttpServer()).post('/internal/v1/auth/resolve').send({ idToken: 'malformed' }).expect(401);
+    } finally {
+      await app.close();
+    }
+  });
+
   it('resolves Firebase identity and exposes only the internal routes', async () => {
     const resolveIdentity = jest
       .fn()
