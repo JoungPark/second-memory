@@ -32,6 +32,10 @@ pnpm --filter @second-memory/aws build
 pnpm --filter @second-memory/aws cdk bootstrap "aws://<account-id>/<region>"
 ```
 
+## Automatic deployment from GitHub
+
+For AWS deployment on pushes to `main`, see the [GitHub Actions deployment guide](github-actions-deployment.md).
+
 ## Deploy both services
 
 If PostgreSQL uses a private CA, place the certificate at `infra/aws/database-ca.pem` before building Memory. From the repository root, build both Linux Arm64 ZIPs into `infra/aws/dist/assets` and compile the CDK app. The TypeScript build and ZIP builds are independent. Recompile the CDK app after stack changes because the CLI runs `dist/bin/second-memory.js`.

@@ -4,6 +4,7 @@
 
 - Evaluate the user's proposal independently. Point out any concrete problems and explain relevant alternatives when they exist.
 - Prefer small, focused files with a single responsibility. Split a file when it contains code that changes for different reasons.
+- When adding or updating a dependency, tool, or GitHub Action, check its official releases and prefer the latest stable version compatible with the project.
 
 ## Repository map
 

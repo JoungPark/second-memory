@@ -1,0 +1,70 @@
+name: Deploy AWS backends
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: second-memory-aws-production
+  queue: max
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_ACCOUNT: ${{ vars.AWS_ACCOUNT }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+      FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+      DATABASE_URL_PARAMETER_NAME: ${{ vars.DATABASE_URL_PARAMETER_NAME }}
+      EMBEDDING_BASE_URL: ${{ vars.EMBEDDING_BASE_URL }}
+      EMBEDDING_MODEL: ${{ vars.EMBEDDING_MODEL }}
+      EMBEDDING_API_KEY_PARAMETER_NAME: ${{ vars.EMBEDDING_API_KEY_PARAMETER_NAME }}
+      ASK_OPENAI_BASE_URL: ${{ vars.ASK_OPENAI_BASE_URL }}
+      ASK_OPENAI_MODEL: ${{ vars.ASK_OPENAI_MODEL }}
+      ASK_OPENAI_API_KEY_PARAMETER_NAME: ${{ vars.ASK_OPENAI_API_KEY_PARAMETER_NAME }}
+      SSM_PARAMETER_KMS_KEY_ARN: ${{ vars.SSM_PARAMETER_KMS_KEY_ARN }}
+      ASK_SSM_PARAMETER_KMS_KEY_ARN: ${{ vars.ASK_SSM_PARAMETER_KMS_KEY_ARN }}
+      ALARM_TOPIC_ARN: ${{ vars.ALARM_TOPIC_ARN }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Restore database CA
+        env:
+          DATABASE_CA_PEM: ${{ secrets.DATABASE_CA_PEM }}
+        run: |
+          : "${DATABASE_CA_PEM:?Set the DATABASE_CA_PEM repository secret}"
+          printf '%s\n' "$DATABASE_CA_PEM" > infra/aws/database-ca.pem
+
+      - name: Install CDK workspace
+        run: |
+          npm install --global "$(node -p 'require("./package.json").packageManager')"
+          pnpm --filter @second-memory/aws install --frozen-lockfile
+
+      - name: Build service ZIPs and compile CDK
+        run: |
+          pnpm --filter @second-memory/aws build:zips
+          pnpm --filter @second-memory/aws build
+
+      - name: Authenticate to AWS
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT }}
+          role-session-name: github-${{ github.run_id }}
+
+      - name: Diff and deploy both stacks
+        run: |
+          pnpm --filter @second-memory/aws cdk diff --method=template
+          pnpm --filter @second-memory/aws cdk deploy --all --require-approval never
