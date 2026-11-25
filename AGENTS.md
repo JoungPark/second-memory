@@ -3,6 +3,7 @@
 ## Rules
 
 - Evaluate the user's proposal independently. Point out any concrete problems and explain relevant alternatives when they exist.
+- Prefer small, focused files with a single responsibility. Split a file when it contains code that changes for different reasons.
 
 ## Repository map
 
