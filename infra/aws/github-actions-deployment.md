@@ -1,6 +1,6 @@
 # Deploy to AWS with GitHub Actions
 
-Every push to `main` queues an AWS deployment of that commit, including web-only and documentation changes. GitHub Actions builds both Arm64 ZIPs, diffs both stacks, and deploys them. Vercel handles the web app and mobile releases stay manual. Apply any required database migrations before merging the backend change. [Deployment workflow](../../.github/workflows/deploy-aws.yml)
+Every push to `main` queues an AWS deployment of that commit, including web-only and documentation changes. GitHub Actions builds three Arm64 ZIPs, diffs all stacks, and deploys them. Vercel handles the web app and mobile releases stay manual. Apply any required database migrations before merging the backend change. [Deployment workflow](../../.github/workflows/deploy-aws.yml)
 
 ## One-time AWS setup
 

@@ -2,6 +2,7 @@ import { App } from 'aws-cdk-lib';
 import { resolve } from 'node:path';
 import { MemoryServiceStack } from '../lib/memory-service-stack';
 import { AskServiceStack } from '../lib/ask-service-stack';
+import { UserServiceStack } from '../lib/user-service-stack';
 
 function required(name: string): string {
   const value = process.env[name]?.trim();
@@ -50,6 +51,16 @@ if (new Set([databaseUrlParameterName, embeddingApiKeyParameterName, chatKeyPara
 }
 
 const app = new App();
+
+new UserServiceStack(app, 'SecondMemoryUserService', {
+  env,
+  artifactPath: resolve(process.env.USER_ARTIFACT_PATH?.trim() || 'dist/assets/user-service.zip'),
+  databaseUrlParameterName,
+  firebaseProjectId: required('FIREBASE_PROJECT_ID'),
+  ssmParameterKmsKeyArn: process.env.SSM_PARAMETER_KMS_KEY_ARN?.trim(),
+  alarmTopicArn,
+});
+
 const defaultMemoryArtifactPath = 'dist/assets/memory-service.zip';
 const memory = new MemoryServiceStack(app, 'SecondMemoryMemoryService', {
   env,

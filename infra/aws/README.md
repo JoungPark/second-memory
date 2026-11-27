@@ -1,6 +1,6 @@
 # AWS deployment and operations
 
-One CDK app deploys two stacks. `SecondMemoryMemoryService` runs the public Memory API and the IAM-protected internal API as separate Lambda Web Functions. `SecondMemoryAskService` runs public Ask, stores sessions in an on-demand DynamoDB table, and calls internal Memory for identity, search, and summary writes. Each endpoint has CloudWatch alarms for HTTP 5xx responses and throttling. For client cutover and retirement, see the [AWS migration plan](../../docs/architecture/aws-migration-plan.md).
+One CDK app deploys three stacks. `SecondMemoryMemoryService` runs the public Memory API and the IAM-protected internal API as separate Lambda Web Functions. `SecondMemoryAskService` runs public Ask, stores sessions in an on-demand DynamoDB table, and calls internal Memory for identity, search, and summary writes. Each endpoint has CloudWatch alarms for HTTP 5xx responses and throttling. For client cutover and retirement, see the [AWS migration plan](../../docs/architecture/aws-migration-plan.md).
 
 ## Workspace setup
 
@@ -8,7 +8,7 @@ Use Node.js, the pnpm version pinned in the root `package.json`, Docker Buildx w
 
 Copy `infra/aws/.env.example` to `infra/aws/.env` for a new workspace. Set the AWS account, Region, and exact HTTPS origins for browser clients. Set `ALARM_TOPIC_ARN` to an existing SNS topic if you want alarm notifications. [Example configuration](.env.example)
 
-CDK synthesizes both stacks even when you select one. Configure both services and make both ZIPs available before running a diff or deploy. For subsequent updates, rebuild the ZIPs affected by your changes.
+CDK synthesizes all stacks even when you select one. Configure both services and make both ZIPs available before running a diff or deploy. For subsequent updates, rebuild the ZIPs affected by your changes.
 
 Both providers require an HTTPS base URL without credentials, a query, or a fragment, and a nonempty model name. Before starting the functions, create three separate, nonempty SSM Parameter Store `SecureString` values in the target account and Region. The settings in `infra/aws/.env` identify existing parameters.
 
@@ -47,7 +47,7 @@ pnpm --filter @second-memory/aws cdk diff --method=template
 pnpm --filter @second-memory/aws cdk deploy --all
 ```
 
-The diff compares the synthesized and deployed templates for both stacks. Use `--all` on deploy to select both. CDK deploys Memory first because Ask imports the internal endpoint URL for requests and its ARN for the execution role's invoke permission.
+The diff compares the synthesized and deployed templates for all stacks. Use `--all` on deploy to select both. CDK deploys Memory first because Ask imports the internal endpoint URL for requests and its ARN for the execution role's invoke permission.
 
 ## Memory service
 
@@ -97,7 +97,7 @@ Set `ASK_OPENAI_BASE_URL` and `ASK_OPENAI_MODEL` to the chat provider and model.
 
 ### Deploy Ask
 
-Build the ZIP and review the stack diff before deploying. CDK includes Memory when deploying Ask, so review both stacks. After Memory has published the endpoint exports, add `--exclusively` to deploy only Ask.
+Build the ZIP and review the stack diff before deploying. CDK includes Memory when deploying Ask, so review all stacks. After Memory has published the endpoint exports, add `--exclusively` to deploy only Ask.
 
 ```powershell
 pnpm --filter @second-memory/aws build:zip:ask

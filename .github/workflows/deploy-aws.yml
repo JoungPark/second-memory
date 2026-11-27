@@ -64,7 +64,7 @@ jobs:
           allowed-account-ids: ${{ vars.AWS_ACCOUNT }}
           role-session-name: github-${{ github.run_id }}
 
-      - name: Diff and deploy both stacks
+      - name: Diff and deploy all stacks
         run: |
           pnpm --filter @second-memory/aws cdk diff --method=template
           pnpm --filter @second-memory/aws cdk deploy --all --require-approval never
