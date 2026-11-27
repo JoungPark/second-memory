@@ -15,11 +15,11 @@ Complete these checks before switching Memory clients or relying on the internal
 
 ## 2. Deploy and verify Lambda Ask
 
-The Ask stack consumes the internal endpoint exported by Memory. Ask resolves each caller's Firebase token over that endpoint and signs search and summary requests with the resolved tenant and user IDs. Lambda Ask uses its own chat credential and shares sessions across execution environments through Valkey. Render and local Ask store sessions in process memory. The two deployments have separate session histories. [Ask operations](../../infra/aws/README.md#ask-service)
+The Ask stack consumes the internal endpoint exported by Memory. Ask resolves each caller's Firebase token over that endpoint and signs search and summary requests with the resolved tenant and user IDs. Lambda Ask uses its own chat credential and shares sessions across execution environments through DynamoDB. Render and local Ask store sessions in process memory. The two deployments have separate session histories. [Ask operations](../../infra/aws/README.md#ask-service)
 
 Complete these checks before switching Ask clients.
 
-1. Verify the public SDK receives HTTP 200 from Ask health and the approved Vercel origins pass CORS preflight. Health confirms that the process is listening. Use an authenticated message to exercise identity resolution, Valkey, retrieval, and the chat provider together.
+1. Verify the public SDK receives HTTP 200 from Ask health and the approved Vercel origins pass CORS preflight. Health confirms that the process is listening. Use an authenticated message to exercise identity resolution, DynamoDB, retrieval, and the chat provider together.
 2. Recall a known memory as its owner, verify its citation, and send a follow-up in a different Lambda execution environment using the same session ID. Check that the earlier turn is available and a second account cannot resume the conversation.
 3. End the session and verify exactly one summary appears in the owner's Memory listing. In separate sessions, verify that explicit close discards the conversation and inactivity expires it after the sliding TTL (one hour by default).
 4. Exercise slow or unavailable Memory and chat providers. Record latency, errors and throttling before sending client traffic to Ask.

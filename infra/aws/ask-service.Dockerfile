@@ -19,7 +19,7 @@ RUN mkdir /asset /unpacked \
     && zip -qr /asset/ask-service.zip dist node_modules package.json \
     && unzip -q /asset/ask-service.zip -d /unpacked \
     && cd /unpacked \
-    && node --no-experimental-require-module -e "require('@valkey/valkey-glide'); require('./dist/app.module'); require('./dist/config/lambda-web');" \
+    && node --no-experimental-require-module -e "require('@aws-sdk/client-dynamodb'); require('./dist/app.module'); require('./dist/config/lambda-web');" \
     && test -f dist/main.js
 
 FROM scratch AS artifact

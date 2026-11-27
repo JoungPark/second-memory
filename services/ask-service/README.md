@@ -110,8 +110,13 @@ curl -X POST http://localhost:3002/v1/ask/messages \
 
 ## Notes
 
-- Standalone sessions live in process memory. Lambda sessions use a dedicated ephemeral Valkey store shared by execution environments.
+- Standalone sessions live in process memory. Lambda sessions use the DynamoDB table named by `SESSION_TABLE_NAME`. Activity refreshes the one-hour default expiry. DynamoDB removes expired items asynchronously.
+- Lambda accepts up to 256 KiB of serialized turns and 384 KiB of total session payload, including a pending summary. If a write exceeds either limit, Ask returns HTTP 413 and keeps the prior conversation state.
 - `POST /v1/ask/end` saves a conversation summary and removes the session. `POST /v1/ask/close` discards the session.
 - Memory search uses vector similarity via memory-service (keyword fallback when embeddings are unavailable or not yet indexed).
 
 See the [AWS deployment instructions](../../infra/aws/README.md#ask-service) for the Lambda profile.
+
+## DynamoDB session tests
+
+Start DynamoDB Local and set `ASK_TEST_DYNAMODB_ENDPOINT` to its HTTP endpoint, then run `pnpm --filter @second-memory/ask-service test --runInBand` from the repository root. The tests create and remove a temporary table using local credentials.

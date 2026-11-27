@@ -20,10 +20,7 @@ export default () => ({
     model: process.env.OPENAI_MODEL ?? DEFAULT_CHAT_MODEL,
   },
   session: {
-    cacheHost: process.env.SESSION_CACHE_HOST,
-    cachePort: Number(process.env.SESSION_CACHE_PORT),
-    cacheName: process.env.SESSION_CACHE_NAME,
-    cacheUser: process.env.SESSION_CACHE_USER,
+    tableName: process.env.SESSION_TABLE_NAME,
     ttlMs: parseInt(process.env.SESSION_TTL_MS ?? '3600000', 10),
     cleanupIntervalMs: parseInt(process.env.SESSION_CLEANUP_INTERVAL_MS ?? '300000', 10),
   },

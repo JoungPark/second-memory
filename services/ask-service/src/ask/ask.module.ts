@@ -1,3 +1,4 @@
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamicModule, Module } from '@nestjs/common';
 import { AskAuthGuard } from './ask-auth.guard';
 import { AskController } from './ask.controller';
@@ -6,9 +7,9 @@ import { OpenAiCompatibleService } from '../llm/openai-compatible.service';
 import { IdentityClientService } from '../identity/identity-client.service';
 import { InternalApiModule } from '../internal-api/internal-api.module';
 import { MemoryModule } from '../memory/memory.module';
+import { DynamoDbSessionStore } from '../sessions/dynamodb-session-store';
 import { SessionStore } from '../sessions/session-store';
 import { SessionStoreService } from '../sessions/session-store.service';
-import { ValkeySessionStore } from '../sessions/valkey-session-store';
 
 @Module({
   imports: [InternalApiModule, MemoryModule],
@@ -20,9 +21,10 @@ export class AskModule {
     return {
       module: AskModule,
       providers: [
+        ...(lambdaWeb ? [{ provide: DynamoDBClient, useFactory: () => new DynamoDBClient({ maxAttempts: 1 }) }] : []),
         {
           provide: SessionStore,
-          useClass: lambdaWeb ? ValkeySessionStore : SessionStoreService,
+          useClass: lambdaWeb ? DynamoDbSessionStore : SessionStoreService,
         },
       ],
     };

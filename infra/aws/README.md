@@ -1,6 +1,6 @@
 # AWS deployment and operations
 
-One CDK app deploys two stacks. `SecondMemoryMemoryService` runs the public Memory API and the IAM-protected internal API as separate Lambda Web Functions. `SecondMemoryAskService` runs public Ask, stores sessions in ElastiCache Serverless for Valkey, and calls internal Memory for identity, search, and summary writes. Each endpoint has CloudWatch alarms for HTTP 5xx responses and throttling. For client cutover and retirement, see the [AWS migration plan](../../docs/architecture/aws-migration-plan.md).
+One CDK app deploys two stacks. `SecondMemoryMemoryService` runs the public Memory API and the IAM-protected internal API as separate Lambda Web Functions. `SecondMemoryAskService` runs public Ask, stores sessions in an on-demand DynamoDB table, and calls internal Memory for identity, search, and summary writes. Each endpoint has CloudWatch alarms for HTTP 5xx responses and throttling. For client cutover and retirement, see the [AWS migration plan](../../docs/architecture/aws-migration-plan.md).
 
 ## Workspace setup
 
@@ -93,7 +93,7 @@ Use two dedicated Firebase test accounts. Capture a uniquely identifiable note t
 
 ## Ask service
 
-Set `ASK_OPENAI_BASE_URL` and `ASK_OPENAI_MODEL` to the chat provider and model. Set `ASK_SSM_PARAMETER_KMS_KEY_ARN` if the chat parameter uses a customer-managed key. Lambda Ask accesses PostgreSQL-backed data through the signed internal API. Render and local Ask keep sessions in process memory, while Lambda execution environments share Valkey sessions.
+Set `ASK_OPENAI_BASE_URL` and `ASK_OPENAI_MODEL` to the chat provider and model. Set `ASK_SSM_PARAMETER_KMS_KEY_ARN` if the chat parameter uses a customer-managed key. Lambda Ask accesses PostgreSQL-backed data through the signed internal API. Render and local Ask keep sessions in process memory. Lambda execution environments share sessions in the DynamoDB table set by CDK through `SESSION_TABLE_NAME`.
 
 ### Deploy Ask
 
@@ -128,6 +128,6 @@ Archive each verified ZIP and its CDK inputs. To roll back, set the correspondin
 | Internal Memory | `INTERNAL_MEMORY_ARTIFACT_PATH` |
 | Ask             | `ASK_ARTIFACT_PATH`             |
 
-Restore compatible inputs. For a Memory rollback, use a ZIP with the CA that matches the database endpoint and keep the other function pointed at its serving ZIP. For Ask, use a revision that understands the session format in the existing Valkey cache. Review the diff for endpoint replacement before deploying, then verify the restored revision serves the same URL and passes its smoke checks.
+Restore compatible inputs. For a Memory rollback, use a ZIP with the CA that matches the database endpoint and keep the other function pointed at its serving ZIP. For Ask, use a ZIP compatible with the deployed DynamoDB session table. Review the diff for endpoint replacement before deploying, then verify the restored revision serves the same URL and passes its smoke checks.
 
 Running environments keep the credentials they loaded at startup. To rotate a credential, store the new value at a new SSM parameter path and update the corresponding setting in `infra/aws/.env`. Deploy fresh revisions for the functions that use it, then verify connectivity with the appropriate smoke checks.

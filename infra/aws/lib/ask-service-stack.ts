@@ -1,6 +1,6 @@
-import { ArnFormat, CfnOutput, Duration, Stack, type StackProps } from 'aws-cdk-lib';
-import { CfnServerlessCache, CfnUser, CfnUserGroup } from 'aws-cdk-lib/aws-elasticache';
-import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { ArnFormat, CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from 'aws-cdk-lib';
+import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
+import { Grant, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Key } from 'aws-cdk-lib/aws-kms';
 import { WebFunction, WebFunctionAuthType, WebFunctionCode, WebFunctionRuntime } from 'aws-cdk-lib/aws-lambda';
 import type { Construct } from 'constructs';
@@ -22,30 +22,12 @@ export class AskServiceStack extends Stack {
   constructor(scope: Construct, id: string, props: AskServiceStackProps) {
     super(scope, id, props);
 
-    const cacheName = 'second-memory-ask-sessions';
-    const cacheUserName = 'second-memory-ask';
-    const cacheUser = new CfnUser(this, 'SessionUser', {
-      engine: 'valkey',
-      userId: cacheUserName,
-      userName: cacheUserName,
-      authenticationMode: { Type: 'iam' },
-      accessString:
-        'on ~ask:* -@all +@connection +info +get +set +del +exists +eval +evalsha +script|load +cluster|slots +cluster|shards +readonly',
+    const sessions = new Table(this, 'Sessions', {
+      partitionKey: { name: 'sessionId', type: AttributeType.STRING },
+      billingMode: BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: 'ttl',
+      removalPolicy: RemovalPolicy.RETAIN,
     });
-    const userGroup = new CfnUserGroup(this, 'SessionUserGroup', {
-      engine: 'valkey',
-      userGroupId: cacheName,
-      userIds: [cacheUser.ref],
-    });
-    const cache = new CfnServerlessCache(this, 'SessionCache', {
-      serverlessCacheName: cacheName,
-      engine: 'valkey',
-      majorEngineVersion: '9',
-      connectionType: 'public',
-      snapshotRetentionLimit: 0,
-      userGroupId: userGroup.ref,
-    });
-
     const functionName = 'second-memory-ask-service';
     const endpointName = 'public';
     const ask = new WebFunction(this, 'AskService', {
@@ -63,18 +45,14 @@ export class AskServiceStack extends Stack {
         OPENAI_BASE_URL: props.chatBaseUrl,
         OPENAI_MODEL: props.chatModel,
         OPENAI_API_KEY_PARAMETER_NAME: props.chatKeyParameterName,
-        SESSION_CACHE_HOST: cache.attrEndpointAddress,
-        SESSION_CACHE_PORT: cache.attrEndpointPort,
-        SESSION_CACHE_NAME: cacheName,
-        SESSION_CACHE_USER: cacheUserName,
+        SESSION_TABLE_NAME: sessions.tableName,
       },
     });
-    ask.addToRolePolicy(
-      new PolicyStatement({
-        actions: ['elasticache:Connect'],
-        resources: [cache.attrArn, cacheUser.attrArn],
-      }),
-    );
+    Grant.addToPrincipal({
+      grantee: ask,
+      actions: ['dynamodb:PutItem', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem'],
+      resourceArns: [sessions.tableArn],
+    }).applyBefore(ask.resourceRevision);
     ask.addToRolePolicy(
       new PolicyStatement({
         actions: ['lambda:InvokeWebFunctionEndpoint'],
