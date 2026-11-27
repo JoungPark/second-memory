@@ -6,6 +6,8 @@ Second Memory needs a way to admit users gradually and limit the model credits t
 
 Today, Memory and Ask use shared NestJS auth code that verifies a Firebase ID token and can create a user and tenant during a normal API request. A valid Firebase sign-in is enough to start using the product. [Current auth flow](../../packages/nest-auth/src/firebase-auth.service.ts)
 
+The [User Service rollout plan](user-service-rollout-plan.md) covers the identity and storage work that prepares for account access and usage controls.
+
 ## Service and database ownership
 
 Firebase handles sign-in. User Service owns the mapping from Firebase UID to Second Memory's `userId` and `tenantId`, as well as tenant membership, account status, invitations, and usage limits. Keep these responsibilities in modules within one service so account activation and allowance checks can use the same database.
