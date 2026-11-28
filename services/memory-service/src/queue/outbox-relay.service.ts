@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EmbeddingJobPayload } from '@second-memory/shared-types';
-import { PrismaService } from '@second-memory/server-db';
+import { PrismaService } from '../database/prisma.service';
 import { EmbeddingQueueService } from './embedding-queue.service';
 
 const OUTBOX_EVENT_ENTRY_CREATED = 'entry.created';

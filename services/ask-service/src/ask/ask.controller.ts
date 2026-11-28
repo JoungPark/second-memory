@@ -1,15 +1,14 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { RequestContext } from '@second-memory/shared-types';
-import { ReqContext } from '@second-memory/nest-auth';
-import { AskAuthGuard } from './ask-auth.guard';
+import { ReqContext, UserServiceAuthGuard } from '@second-memory/nest-auth';
 import { AskService } from './ask.service';
 import { AskCloseDto, AskEndDto, AskMessageDto } from './dto/ask.dto';
 
 @ApiTags('ask')
 @ApiBearerAuth('firebase')
 @Controller('v1/ask')
-@UseGuards(AskAuthGuard)
+@UseGuards(UserServiceAuthGuard)
 export class AskController {
   constructor(private readonly askService: AskService) {}
 

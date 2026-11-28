@@ -6,7 +6,6 @@ RUN dnf install -y openssl zip unzip && dnf clean all \
 WORKDIR /workspace
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json turbo.json ./
 COPY packages/shared-types packages/shared-types
-COPY packages/server-db packages/server-db
 COPY packages/nest-auth packages/nest-auth
 COPY services/memory-service services/memory-service
 
@@ -20,10 +19,10 @@ RUN --mount=type=bind,source=infra/aws,target=/deployment \
       node /deployment/copy-database-ca.mjs /deployment/database-ca.pem dist; \
     fi \
     && mkdir /asset /unpacked \
-    && zip -qr /asset/memory-service.zip dist node_modules package.json \
+    && zip -qr /asset/memory-service.zip dist prisma/generated node_modules package.json \
     && unzip -q /asset/memory-service.zip -d /unpacked \
     && cd /unpacked \
-    && node --no-experimental-require-module -e "require('@aws-sdk/client-ssm'); require('@second-memory/server-db'); require('./node_modules/@second-memory/server-db/prisma/generated/libquery_engine-linux-arm64-openssl-3.0.x.so.node'); require('./dist/app.module');" \
+    && node --no-experimental-require-module -e "require('@aws-sdk/client-ssm'); require('./prisma/generated'); require('./prisma/generated/libquery_engine-linux-arm64-openssl-3.0.x.so.node'); require('./dist/app.module');" \
     && test -f dist/main.js
 
 FROM scratch AS artifact

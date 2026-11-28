@@ -1,8 +1,8 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { FirebaseAuthService } from '@second-memory/nest-auth';
 import request from 'supertest';
 import { configureHttp } from '../app-http';
+import { FirebaseAuthService } from './firebase-auth.service';
 import { InternalIdentityController } from './internal-identity.controller';
 
 describe('identity HTTP contract', () => {

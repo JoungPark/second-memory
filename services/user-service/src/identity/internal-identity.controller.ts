@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, Post, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
-import { FirebaseAuthService } from '@second-memory/nest-auth';
 import type { ResolveIdentityRequest, ResolveIdentityResponse } from '@second-memory/shared-types';
 import { IsNotEmpty, IsString } from 'class-validator';
+import { FirebaseAuthService } from './firebase-auth.service';
 
 class ResolveIdentityDto implements ResolveIdentityRequest {
   @IsString()

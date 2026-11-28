@@ -17,7 +17,6 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "3.1178.0",
     "@aws-sdk/client-ssm": "3.1171.0",
-    "@aws-sdk/credential-provider-node": "3.972.97",
     "@nestjs/common": "^11.1.6",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
@@ -26,7 +25,6 @@
     "@nestjs/swagger": "^11.2.0",
     "@second-memory/nest-auth": "workspace:*",
     "@second-memory/shared-types": "workspace:*",
-    "@smithy/signature-v4": "5.7.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "reflect-metadata": "^0.2.2",
@@ -54,7 +52,7 @@
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.ts$": "ts-jest"
     },
     "moduleNameMapper": {
       "^@second-memory/shared-types$": "<rootDir>/../../../packages/shared-types/src/index.ts"

@@ -21,7 +21,7 @@ export class InternalApiClient {
   async post<T>(
     address: string,
     request: object,
-    timeoutMs: number,
+    timeoutMs: number | undefined,
     requestHeaders: Record<string, string> = {},
   ): Promise<T> {
     const url = new URL(address);
@@ -41,7 +41,7 @@ export class InternalApiClient {
       method: 'POST',
       headers: signed?.headers ?? headers,
       body,
-      ...(signed ? { signal: AbortSignal.timeout(timeoutMs), redirect: 'error' as const } : {}),
+      ...(timeoutMs === undefined ? {} : { signal: AbortSignal.timeout(timeoutMs), redirect: 'error' as const }),
     });
     if (!response.ok) {
       await response.body?.cancel();

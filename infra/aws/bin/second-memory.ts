@@ -61,6 +61,14 @@ const user = new UserServiceStack(app, 'SecondMemoryUserService', {
   alarmTopicArn,
 });
 
+// The managed ZIP publisher resolves environment variables before CDK links cross-stack resource attributes.
+const userServiceUrl = user.exportValue(user.internalUrl, {
+  name: `${user.stackName}:UserServiceUrl`,
+});
+const userServiceEndpointArn = user.exportValue(user.internalEndpointArn, {
+  name: `${user.stackName}:UserServiceEndpointArn`,
+});
+
 const defaultMemoryArtifactPath = 'dist/assets/memory-service.zip';
 const memory = new MemoryServiceStack(app, 'SecondMemoryMemoryService', {
   env,
@@ -70,13 +78,14 @@ const memory = new MemoryServiceStack(app, 'SecondMemoryMemoryService', {
   alarmTopicArn,
   artifactPath: resolve(process.env.MEMORY_ARTIFACT_PATH?.trim() || defaultMemoryArtifactPath),
   internalArtifactPath: resolve(process.env.INTERNAL_MEMORY_ARTIFACT_PATH?.trim() || defaultMemoryArtifactPath),
-  firebaseProjectId: required('FIREBASE_PROJECT_ID'),
+  userServiceUrl,
+  userServiceEndpointArn,
   corsOrigins,
   embeddingBaseUrl,
   embeddingModel,
 });
+memory.addStackDependency(user);
 
-// The managed ZIP publisher resolves environment variables before CDK links cross-stack resource attributes.
 const ask = new AskServiceStack(app, 'SecondMemoryAskService', {
   env,
   artifactPath: resolve(process.env.ASK_ARTIFACT_PATH ?? 'dist/assets/ask-service.zip'),
@@ -87,12 +96,8 @@ const ask = new AskServiceStack(app, 'SecondMemoryAskService', {
   memoryEndpointArn: memory.exportValue(memory.internalEndpointArn, {
     name: `${memory.stackName}:InternalMemoryServiceEndpointArn`,
   }),
-  userServiceUrl: user.exportValue(user.internalUrl, {
-    name: `${user.stackName}:UserServiceUrl`,
-  }),
-  userServiceEndpointArn: user.exportValue(user.internalEndpointArn, {
-    name: `${user.stackName}:UserServiceEndpointArn`,
-  }),
+  userServiceUrl,
+  userServiceEndpointArn,
   chatBaseUrl,
   chatModel,
   chatKeyParameterName,

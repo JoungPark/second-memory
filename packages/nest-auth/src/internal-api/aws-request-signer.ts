@@ -18,16 +18,10 @@ class Sha256 {
     this.hash =
       secret === undefined
         ? createHash('sha256')
-        : createHmac(
-            'sha256',
-            typeof secret === 'string' ? secret : toBytes(secret),
-          );
+        : createHmac('sha256', typeof secret === 'string' ? secret : toBytes(secret));
   }
 
-  update(
-    data: HashInput,
-    encoding: 'utf8' | 'ascii' | 'latin1' = 'utf8',
-  ): void {
+  update(data: HashInput, encoding: 'utf8' | 'ascii' | 'latin1' = 'utf8'): void {
     if (typeof data === 'string') {
       this.hash.update(data, encoding);
     } else {

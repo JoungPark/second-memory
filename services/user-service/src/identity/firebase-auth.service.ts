@@ -1,13 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UsersService } from '@second-memory/server-db';
+import type { ResolveIdentityResponse } from '@second-memory/shared-types';
 import * as admin from 'firebase-admin';
-
-export interface VerifiedFirebaseToken {
-  firebaseUid: string;
-  tenantId: string;
-  userId: string;
-}
+import { UsersService } from './postgres/users.service';
 
 @Injectable()
 export class FirebaseAuthService {
@@ -18,21 +13,10 @@ export class FirebaseAuthService {
     private readonly usersService: UsersService,
   ) {}
 
-  async verifyIdToken(idToken: string): Promise<VerifiedFirebaseToken> {
-    this.ensureInitialized();
-
-    try {
-      return await this.resolveIdentity(idToken);
-    } catch {
-      throw new UnauthorizedException('Invalid or expired Firebase ID token');
-    }
-  }
-
-  async resolveIdentity(idToken: string): Promise<VerifiedFirebaseToken> {
+  async resolveIdentity(idToken: string): Promise<ResolveIdentityResponse> {
     this.ensureInitialized();
     const decoded = await this.decodeIdToken(idToken);
-    const { tenantId, userId } = await this.usersService.findOrCreateByFirebaseUid(decoded.uid, decoded.email);
-    return { firebaseUid: decoded.uid, tenantId, userId };
+    return this.usersService.findOrCreateByFirebaseUid(decoded.uid, decoded.email);
   }
 
   private async decodeIdToken(idToken: string): Promise<admin.auth.DecodedIdToken> {

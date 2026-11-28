@@ -5,7 +5,11 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "build/**"]
     },
-    "@second-memory/server-db#build": {
+    "@second-memory/memory-service#build": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "@second-memory/user-service#build": {
       "dependsOn": ["^build"],
       "cache": false
     },

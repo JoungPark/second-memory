@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '../../prisma/generated';
-import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '../../../prisma/generated';
+import { IdentityPrismaService } from './identity-prisma.service';
 
 export interface StoredUser {
   id: string;
@@ -12,7 +12,7 @@ export interface StoredUser {
 
 @Injectable()
 export class UsersRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: IdentityPrismaService) {}
 
   async findByFirebaseUid(firebaseUid: string): Promise<StoredUser | undefined> {
     const user = await this.prisma.user.findUnique({

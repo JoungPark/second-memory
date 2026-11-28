@@ -1,5 +1,5 @@
 node_modules/
-/packages/server-db/prisma/generated/
+**/prisma/generated/
 .pnpm-store/
 .turbo/
 dist/
@@ -16,3 +16,5 @@ coverage/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+.agents

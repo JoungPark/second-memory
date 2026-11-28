@@ -5,10 +5,6 @@ import { OpenAiCompatibleService } from './llm/openai-compatible.service';
 import { SessionStore } from './sessions/session-store';
 import { SessionStoreService } from './sessions/session-store.service';
 
-jest.mock('@aws-sdk/credential-provider-node', () => ({
-  defaultProvider: () => async () => ({ accessKeyId: 'test-key', secretAccessKey: 'test-secret' }),
-}));
-
 afterEach(() => jest.restoreAllMocks());
 
 it('serves Lambda health without connecting to dependencies', async () => {
@@ -34,7 +30,14 @@ it.each(['standalone', 'lambda'] as const)('resolves and propagates identity in 
   const lambda = profile === 'lambda';
   const userUrl = lambda ? 'https://user.example.test' : 'http://127.0.0.1:3003';
   const memoryUrl = 'https://memory.example.test';
-  const owner = { tenantId: 'existing-tenant', userId: 'existing-user' };
+  const owner = {
+    tenantId: '00000000-0000-4000-8000-000000000001',
+    userId: '00000000-0000-4000-8000-000000000002',
+  };
+  const secondAccount = {
+    tenantId: '00000000-0000-4000-8000-000000000003',
+    userId: '00000000-0000-4000-8000-000000000004',
+  };
   const upstream = new Map<string, { body: unknown; headers: Headers }>();
   let identityStatus = 200;
   const sendToAsk = globalThis.fetch.bind(globalThis);
@@ -44,7 +47,7 @@ it.each(['standalone', 'lambda'] as const)('resolves and propagates identity in 
     switch (url) {
       case `${userUrl}/internal/v1/auth/resolve`:
         return Response.json(
-          String(init?.body).includes('second-account') ? { tenantId: 'second-tenant', userId: 'second-user' } : owner,
+          String(init?.body).includes('second-account') ? secondAccount : owner,
           { status: identityStatus },
         );
       case `${memoryUrl}/internal/v1/memories/search`:
@@ -69,6 +72,11 @@ it.each(['standalone', 'lambda'] as const)('resolves and propagates identity in 
     ...process.env,
     AWS_LAMBDA_HTTP_ENDPOINT: lambda ? '127.0.0.1:8080' : undefined,
     AWS_REGION: 'ap-southeast-2',
+    AWS_ACCESS_KEY_ID: 'test-key',
+    AWS_SECRET_ACCESS_KEY: 'test-secret',
+    AWS_SESSION_TOKEN: 'test-session-token',
+    AWS_CREDENTIAL_EXPIRATION: undefined,
+    AWS_PROFILE: undefined,
     USER_SERVICE_URL: lambda ? `${userUrl}/` : '',
     MEMORY_SERVICE_URL: memoryUrl,
   });

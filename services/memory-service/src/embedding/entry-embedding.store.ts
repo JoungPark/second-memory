@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@second-memory/server-db';
+import { Prisma } from '../../prisma/generated';
 
 @Injectable()
 export class EntryEmbeddingStore {

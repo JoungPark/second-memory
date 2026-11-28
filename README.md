@@ -16,7 +16,7 @@ This repository is a pnpm + Turborepo monorepo aligned with the V1 architecture 
 | `services/worker-embeddings` | Optional | Python BullMQ worker — async embedding via local sentence-transformers (384 dims; not started by `pnpm dev`) |
 | `services/ask-service` | Milestone B | NestJS RAG/chat orchestration — `/v1/ask/messages` |
 | `services/user-service` | Done | Resolves Firebase ID tokens to internal user and tenant IDs |
-| `packages/*` | Partial | Shared types, server-db, nest-auth, client SDK, UI hooks |
+| `packages/*` | Partial | Shared types, nest-auth, client SDK, UI hooks |
 
 ## Repository Layout
 
@@ -27,14 +27,13 @@ apps/
 
 services/
 	user-service/        # Firebase identity resolution
-	memory-service/      # NestJS memory APIs
+	memory-service/      # NestJS memory APIs, Prisma schema and migrations
 	ask-service/         # NestJS RAG/chat orchestration
 	worker-embeddings/   # Python BullMQ embedding worker
 
 packages/
 	shared-types/        # Shared contracts and DTOs
-	server-db/           # Prisma schema, migrations, DatabaseModule, UsersModule
-	nest-auth/           # Firebase auth, guards, request-context utilities
+	nest-auth/           # User Service client, guards, request context
 	shared-config/       # Shared lint/ts/build presets
 	ui/                  # Shared UI hooks and components
 	client-sdk/          # Typed client helpers
@@ -68,8 +67,10 @@ Start infrastructure, then run the services you need:
 # Run from the repository root. Start each dev service in its own terminal.
 docker compose -f infra/docker/docker-compose.yml up -d postgres
 
-# Copy the User, Memory and Ask  Service .env.example files to .env and configure them.
-pnpm --filter @second-memory/server-db db:migrate
+# Copy the User, Memory and Ask Service .env.example files to .env and configure them.
+pnpm install
+pnpm build:packages
+pnpm --filter @second-memory/memory-service db:migrate
 pnpm --filter @second-memory/user-service dev
 pnpm --filter @second-memory/memory-service dev
 pnpm --filter @second-memory/ask-service dev
@@ -95,14 +96,11 @@ pnpm --filter @second-memory/worker-embeddings dev
 
 ## Memory Service Database Setup
 
-PostgreSQL persistence uses Prisma in `packages/server-db`.
+Memory Service owns the PostgreSQL schema and migrations under `services/memory-service/prisma`. User Service uses the same PostgreSQL database for legacy identities during the cutover. Set `DATABASE_URL` in both service environments.
 
 ```bash
-cd infra/docker && docker compose up -d postgres
-pnpm --filter @second-memory/server-db db:migrate
-cd services/memory-service
-cp .env.example .env   # if needed
-pnpm dev
+docker compose -f infra/docker/docker-compose.yml up -d postgres
+pnpm --filter @second-memory/memory-service db:migrate
 ```
 
 E2E tests require Postgres running and apply migrations automatically via `test/global-setup.ts`.

@@ -13,12 +13,12 @@
     "test": "echo \"No tests yet\""
   },
   "dependencies": {
+    "@aws-sdk/credential-provider-node": "3.972.97",
     "@nestjs/common": "^11.1.6",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
-    "@second-memory/server-db": "workspace:*",
     "@second-memory/shared-types": "workspace:*",
-    "firebase-admin": "^13.5.0",
+    "@smithy/signature-v4": "5.7.5",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {

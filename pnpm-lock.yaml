@@ -326,6 +326,9 @@ importers:
 
   packages/nest-auth:
     dependencies:
+      '@aws-sdk/credential-provider-node':
+        specifier: 3.972.97
+        version: 3.972.97
       '@nestjs/common':
         specifier: ^11.1.6
         version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -335,15 +338,12 @@ importers:
       '@nestjs/core':
         specifier: ^11.1.6
         version: 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@second-memory/server-db':
-        specifier: workspace:*
-        version: link:../server-db
       '@second-memory/shared-types':
         specifier: workspace:*
         version: link:../shared-types
-      firebase-admin:
-        specifier: ^13.5.0
-        version: 13.10.0(@firebase/app-compat@0.5.16)(@firebase/app@0.16.0)
+      '@smithy/signature-v4':
+        specifier: 5.7.5
+        version: 5.7.5
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -354,48 +354,6 @@ importers:
       typescript:
         specifier: ^5.6.2
         version: 5.9.3
-
-  packages/server-db:
-    dependencies:
-      '@nestjs/common':
-        specifier: ^11.1.6
-        version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core':
-        specifier: ^11.1.6
-        version: 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.28)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@prisma/client':
-        specifier: ^6.16.1
-        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
-      '@second-memory/shared-types':
-        specifier: workspace:*
-        version: link:../shared-types
-      reflect-metadata:
-        specifier: ^0.2.2
-        version: 0.2.2
-    devDependencies:
-      '@nestjs/testing':
-        specifier: ^11.1.6
-        version: 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)(@nestjs/platform-express@11.1.28)
-      '@types/jest':
-        specifier: ^30.0.0
-        version: 30.0.0
-      '@types/node':
-        specifier: ^22.18.0
-        version: 22.20.1
-      jest:
-        specifier: ^30.1.3
-        version: 30.4.2(@types/node@22.20.1)(ts-node@10.9.2(@types/node@22.20.1)(typescript@5.9.3))
-      prisma:
-        specifier: ^6.16.1
-        version: 6.19.3(typescript@5.9.3)
-      ts-jest:
-        specifier: ^29.4.1
-        version: 29.4.12(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@30.4.1(@babel/core@7.29.7))(jest-util@30.4.1)(jest@30.4.2(@types/node@22.20.1)(ts-node@10.9.2(@types/node@22.20.1)(typescript@5.9.3)))(typescript@5.9.3)
-      typescript:
-        specifier: ^5.6.2
-        version: 5.9.3
-
-  packages/shared-types: {}
 
   packages/ui:
     dependencies:
@@ -424,12 +382,6 @@ importers:
       '@aws-sdk/client-ssm':
         specifier: 3.1171.0
         version: 3.1171.0
-      '@aws-sdk/credential-provider-node':
-        specifier: 3.972.97
-        version: 3.972.97
-      '@smithy/signature-v4':
-        specifier: 5.7.5
-        version: 5.7.5
       '@nestjs/common':
         specifier: ^11.1.6
         version: 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -521,12 +473,12 @@ importers:
       '@nestjs/swagger':
         specifier: ^11.2.0
         version: 11.4.7(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)
+      '@prisma/client':
+        specifier: ^6.16.1
+        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
       '@second-memory/nest-auth':
         specifier: workspace:*
         version: link:../../packages/nest-auth
-      '@second-memory/server-db':
-        specifier: workspace:*
-        version: link:../../packages/server-db
       '@second-memory/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
@@ -573,6 +525,9 @@ importers:
       jest:
         specifier: ^30.1.3
         version: 30.4.2(@types/node@22.20.1)(ts-node@10.9.2(@types/node@22.20.1)(typescript@5.9.3))
+      prisma:
+        specifier: ^6.16.1
+        version: 6.19.3(typescript@5.9.3)
       source-map-support:
         specifier: ^0.5.21
         version: 0.5.21
@@ -606,12 +561,9 @@ importers:
       '@nestjs/platform-express':
         specifier: ^11.1.6
         version: 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)
-      '@second-memory/nest-auth':
-        specifier: workspace:*
-        version: link:../../packages/nest-auth
-      '@second-memory/server-db':
-        specifier: workspace:*
-        version: link:../../packages/server-db
+      '@prisma/client':
+        specifier: ^6.16.1
+        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
       '@second-memory/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
@@ -621,6 +573,9 @@ importers:
       class-validator:
         specifier: ^0.14.2
         version: 0.14.4
+      firebase-admin:
+        specifier: ^13.5.0
+        version: 13.10.0(@firebase/app-compat@0.5.16)(@firebase/app@0.16.0)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -652,6 +607,9 @@ importers:
       jest:
         specifier: ^30.1.3
         version: 30.4.2(@types/node@22.20.1)(ts-node@10.9.2(@types/node@22.20.1)(typescript@5.9.3))
+      prisma:
+        specifier: ^6.16.1
+        version: 6.19.3(typescript@5.9.3)
       source-map-support:
         specifier: ^0.5.21
         version: 0.5.21

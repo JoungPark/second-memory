@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { RequestContext } from '@second-memory/shared-types';
-import { PrismaService } from '@second-memory/server-db';
+import { PrismaService } from '../database/prisma.service';
 import { EntryEmbeddingStore } from '../embedding/entry-embedding.store';
 import { MemoriesRepository } from './memories.repository';
 

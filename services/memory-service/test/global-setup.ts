@@ -10,9 +10,8 @@ export default async function globalSetup(): Promise<void> {
   }
   process.env.DATABASE_URL = testDatabaseUrl;
 
-  const serverDbRoot = path.resolve(__dirname, '../../../packages/server-db');
-  execSync('pnpm exec prisma migrate deploy', {
-    cwd: serverDbRoot,
+  execSync('pnpm db:migrate:deploy', {
+    cwd: path.resolve(__dirname, '..'),
     stdio: 'inherit',
     env: process.env,
   });

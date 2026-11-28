@@ -1,10 +1,8 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from '@second-memory/nest-auth';
-import { DatabaseModule } from '@second-memory/server-db';
 import configuration from './config/configuration';
+import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
-import { IdentityModule } from './identity/identity.module';
 import { MemoriesModule } from './memories/memories.module';
 
 export type MemoryAppProfile = 'server' | 'lambda-web' | 'lambda-web-internal';
@@ -15,7 +13,6 @@ export type MemoryAppProfile = 'server' | 'lambda-web' | 'lambda-web-internal';
       isGlobal: true,
       load: [configuration],
     }),
-    AuthModule,
   ],
 })
 export class AppModule {
@@ -27,7 +24,7 @@ export class AppModule {
           ? DatabaseModule
           : DatabaseModule.withLazyConnection(),
         MemoriesModule.forProfile(profile),
-        profile === 'lambda-web-internal' ? IdentityModule : HealthModule,
+        ...(profile === 'lambda-web-internal' ? [] : [HealthModule]),
       ],
     };
   }

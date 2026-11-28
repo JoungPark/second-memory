@@ -6,15 +6,11 @@
 !turbo.json
 !packages/
 !packages/shared-types/
-!packages/server-db/
 !packages/nest-auth/
 !packages/*/package.json
 !packages/*/tsconfig.json
 !packages/*/src/
 !packages/*/src/**
-!packages/server-db/prisma/
-!packages/server-db/prisma/**
-packages/server-db/prisma/generated/
 !services/
 !services/ask-service/
 !services/ask-service/package.json

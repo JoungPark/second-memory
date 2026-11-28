@@ -6,7 +6,6 @@ RUN dnf install -y openssl zip unzip && dnf clean all \
 WORKDIR /workspace
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json turbo.json ./
 COPY packages/shared-types packages/shared-types
-COPY packages/server-db packages/server-db
 COPY packages/nest-auth packages/nest-auth
 COPY services/ask-service services/ask-service
 

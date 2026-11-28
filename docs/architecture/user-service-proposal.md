@@ -4,7 +4,7 @@
 
 Second Memory needs a way to admit users gradually and limit the model credits they can spend when the app is published. Add a `user-service` that combines identity, account access, and usage limits. This work can be planned independently of the [AWS migration](aws-migration-plan.md).
 
-Today, Memory and Ask use shared NestJS auth code that verifies a Firebase ID token and can create a user and tenant during a normal API request. A valid Firebase sign-in is enough to start using the product. [Current auth flow](../../packages/nest-auth/src/firebase-auth.service.ts)
+Memory and Ask use shared NestJS auth code to resolve Firebase ID tokens through User Service. A valid Firebase sign-in can create a user and tenant during a normal API request. [Firebase identity resolver](../../services/user-service/src/identity/firebase-auth.service.ts)
 
 The [User Service rollout plan](user-service-rollout-plan.md) covers the identity and storage work that prepares for account access and usage controls.
 
@@ -12,7 +12,7 @@ The [User Service rollout plan](user-service-rollout-plan.md) covers the identit
 
 Firebase handles sign-in. User Service owns the mapping from Firebase UID to Second Memory's `userId` and `tenantId`, as well as tenant membership, account status, invitations, and usage limits. Keep these responsibilities in modules within one service so account activation and allowance checks can use the same database.
 
-Each service that uses PostgreSQL owns its database, Prisma schema, client, and migrations. Memory owns entries and embeddings. Ask owns conversation state in its own store. Memory and Ask use the internal IDs issued by User Service and access other services' data through their APIs. When moving identity records, preserve existing user and tenant IDs and replace Memory's current foreign keys to the identity tables with UUID references resolved through User Service. [Current Prisma schema](../../packages/server-db/prisma/schema.prisma)
+Memory owns entries, embeddings, and the canonical PostgreSQL schema and migrations. Ask owns conversation state in its own store. Memory and Ask use the internal IDs issued by User Service and access other services' data through their APIs. During the temporary PostgreSQL stage, User Service uses a local Prisma client for the existing identity tables. When moving identity records, preserve existing user and tenant IDs and replace Memory's current foreign keys to the identity tables with UUID references resolved through User Service. [Current Prisma schema](../../services/memory-service/prisma/schema.prisma)
 
 ## Invitations and waitlist
 

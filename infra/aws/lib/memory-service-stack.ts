@@ -1,7 +1,7 @@
 import { CfnOutput, Duration, Stack, type StackProps } from 'aws-cdk-lib';
 import { Alarm, Metric, TreatMissingData } from 'aws-cdk-lib/aws-cloudwatch';
 import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
-import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Grant, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Key } from 'aws-cdk-lib/aws-kms';
 import { WebFunction, WebFunctionAuthType, WebFunctionCode, WebFunctionRuntime } from 'aws-cdk-lib/aws-lambda';
 import { Topic } from 'aws-cdk-lib/aws-sns';
@@ -14,7 +14,8 @@ export interface MemoryServiceStackProps extends StackProps {
   readonly alarmTopicArn?: string;
   readonly artifactPath: string;
   readonly internalArtifactPath: string;
-  readonly firebaseProjectId: string;
+  readonly userServiceUrl: string;
+  readonly userServiceEndpointArn: string;
   readonly corsOrigins: readonly string[];
   readonly embeddingBaseUrl: string;
   readonly embeddingModel: string;
@@ -41,8 +42,16 @@ export class MemoryServiceStack extends Stack {
       endpointName: 'public',
       authType: WebFunctionAuthType.APPLICATION_MANAGED,
       artifactPath: props.artifactPath,
-      environment: { CORS_ORIGINS: props.corsOrigins.join(',') },
+      environment: {
+        CORS_ORIGINS: props.corsOrigins.join(','),
+        USER_SERVICE_URL: props.userServiceUrl,
+      },
     });
+    Grant.addToPrincipal({
+      grantee: publicMemory,
+      actions: ['lambda:InvokeWebFunctionEndpoint'],
+      resourceArns: [props.userServiceEndpointArn],
+    }).applyBefore(publicMemory.resourceRevision);
 
     new CfnOutput(this, 'MemoryServiceUrl', {
       value: `https://${publicMemory.endpoint.domainName}`,
@@ -104,7 +113,6 @@ export class MemoryServiceStack extends Stack {
       environment: {
         DATABASE_URL_PARAMETER_NAME: props.databaseUrlParameterName,
         EMBEDDING_API_KEY_PARAMETER_NAME: props.embeddingApiKeyParameterName,
-        FIREBASE_PROJECT_ID: props.firebaseProjectId,
         EMBEDDING_BASE_URL: props.embeddingBaseUrl,
         EMBEDDING_MODEL: props.embeddingModel,
         ...environment,

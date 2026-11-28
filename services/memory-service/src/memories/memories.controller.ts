@@ -1,14 +1,14 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { RequestContext } from '@second-memory/shared-types';
-import { FirebaseAuthGuard, ReqContext } from '@second-memory/nest-auth';
+import { ReqContext, UserServiceAuthGuard } from '@second-memory/nest-auth';
 import { CreateMemoryDto, ListMemoriesQueryDto } from './dto/memory.dto';
 import { MemoriesService } from './memories.service';
 
 @ApiTags('memories')
 @ApiBearerAuth('firebase')
 @Controller('v1/memories')
-@UseGuards(FirebaseAuthGuard)
+@UseGuards(UserServiceAuthGuard)
 export class MemoriesController {
   constructor(private readonly memoriesService: MemoriesService) {}
 

@@ -1,10 +1,11 @@
 import { Injectable, UnauthorizedException, type CanActivate, type ExecutionContext } from '@nestjs/common';
-import { AUTHORIZATION_HEADER, REQUEST_CONTEXT_KEY, extractBearerToken, readHeader } from '@second-memory/nest-auth';
 import type { RequestContext } from '@second-memory/shared-types';
-import { IdentityClientService } from '../identity/identity-client.service';
+import { extractBearerToken, readHeader } from '../context/header-utils';
+import { AUTHORIZATION_HEADER, REQUEST_CONTEXT_KEY } from '../context/request-context.constants';
+import { IdentityClientService } from './identity-client.service';
 
 @Injectable()
-export class AskAuthGuard implements CanActivate {
+export class UserServiceAuthGuard implements CanActivate {
   constructor(private readonly identityClient: IdentityClientService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

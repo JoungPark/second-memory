@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { InternalApiModule } from '../internal-api/internal-api.module';
+import { InternalApiModule } from '@second-memory/nest-auth';
 import { MemoryClientService } from './memory-client.service';
 
 @Module({

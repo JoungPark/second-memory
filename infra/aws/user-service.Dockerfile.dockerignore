@@ -6,15 +6,10 @@
 !turbo.json
 !packages/
 !packages/shared-types/
-!packages/server-db/
-!packages/nest-auth/
 !packages/*/package.json
 !packages/*/tsconfig.json
 !packages/*/src/
 !packages/*/src/**
-!packages/server-db/prisma/
-!packages/server-db/prisma/**
-packages/server-db/prisma/generated/
 !services/
 !services/user-service/
 !services/user-service/package.json
@@ -22,6 +17,9 @@ packages/server-db/prisma/generated/
 !services/user-service/tsconfig*.json
 !services/user-service/src/
 !services/user-service/src/**
+!services/user-service/prisma/
+!services/user-service/prisma/schema.prisma
+services/user-service/prisma/generated/
 !infra/
 infra/**
 !infra/aws/

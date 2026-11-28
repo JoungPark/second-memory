@@ -1,7 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import {
-  FirebaseAuthGuard,
   InternalRequestContextGuard,
+  UserServiceAuthModule,
 } from '@second-memory/nest-auth';
 import { EmbeddingModule } from '../embedding/embedding.module';
 import { QueueModule } from '../queue/queue.module';
@@ -18,13 +18,16 @@ export class MemoriesModule {
   static forProfile(
     profile: 'server' | 'lambda-web' | 'lambda-web-internal',
   ): DynamicModule {
+    const hasPublicRoutes = profile !== 'lambda-web-internal';
+    const hasInternalRoutes = profile !== 'lambda-web';
     return {
       module: MemoriesModule,
+      imports: hasPublicRoutes ? [UserServiceAuthModule] : [],
       controllers: [
-        ...(profile !== 'lambda-web-internal' ? [MemoriesController] : []),
-        ...(profile !== 'lambda-web' ? [InternalMemoriesController] : []),
+        ...(hasPublicRoutes ? [MemoriesController] : []),
+        ...(hasInternalRoutes ? [InternalMemoriesController] : []),
       ],
-      providers: [FirebaseAuthGuard, InternalRequestContextGuard],
+      providers: hasInternalRoutes ? [InternalRequestContextGuard] : [],
     };
   }
 }

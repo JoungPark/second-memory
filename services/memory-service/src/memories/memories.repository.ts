@@ -12,7 +12,8 @@ import type {
   SearchMemoriesResponse,
   SearchMemoryResult,
 } from '@second-memory/shared-types';
-import { Prisma, PrismaService } from '@second-memory/server-db';
+import { Prisma } from '../../prisma/generated';
+import { PrismaService } from '../database/prisma.service';
 import { EntryEmbeddingStore } from '../embedding/entry-embedding.store';
 
 interface VectorSearchRow {
