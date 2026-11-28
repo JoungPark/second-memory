@@ -25,7 +25,6 @@
     "@nestjs/schedule": "^6.0.0",
     "@nestjs/swagger": "^11.2.0",
     "@second-memory/nest-auth": "workspace:*",
-    "@second-memory/server-db": "workspace:*",
     "@second-memory/shared-types": "workspace:*",
     "@smithy/signature-v4": "5.7.5",
     "class-transformer": "^0.5.1",

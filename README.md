@@ -15,19 +15,21 @@ This repository is a pnpm + Turborepo monorepo aligned with the V1 architecture 
 | `services/memory-service` | Done | NestJS memory API — capture, list, vector search (keyword fallback), outbox → BullMQ |
 | `services/worker-embeddings` | Optional | Python BullMQ worker — async embedding via local sentence-transformers (384 dims; not started by `pnpm dev`) |
 | `services/ask-service` | Milestone B | NestJS RAG/chat orchestration — `/v1/ask/messages` |
+| `services/user-service` | Done | Resolves Firebase ID tokens to internal user and tenant IDs |
 | `packages/*` | Partial | Shared types, server-db, nest-auth, client SDK, UI hooks |
 
 ## Repository Layout
 
 ```text
 apps/
-	web/                 # Next.js web client (done)
-	mobile/              # Expo mobile client (done)
+	web/                 # Next.js web client
+	mobile/              # Expo mobile client
 
 services/
-	memory-service/      # NestJS memory APIs (done)
-	ask-service/         # NestJS RAG/chat orchestration (Milestone B)
-	worker-embeddings/   # Python BullMQ embedding worker (done)
+	user-service/        # Firebase identity resolution
+	memory-service/      # NestJS memory APIs
+	ask-service/         # NestJS RAG/chat orchestration
+	worker-embeddings/   # Python BullMQ embedding worker
 
 packages/
 	shared-types/        # Shared contracts and DTOs
@@ -63,21 +65,15 @@ See the [AWS CDK deployment README](infra/aws/README.md) for deployment instruct
 Start infrastructure, then run the services you need:
 
 ```bash
-# 1. Postgres (+ Redis only if using worker storage mode)
-cd infra/docker && docker compose up -d postgres
+# Run from the repository root. Start each dev service in its own terminal.
+docker compose -f infra/docker/docker-compose.yml up -d postgres
 
-# 2. Database migrations + memory service
+# Copy the User, Memory and Ask  Service .env.example files to .env and configure them.
 pnpm --filter @second-memory/server-db db:migrate
-cd services/memory-service
-cp .env.example .env   # set EMBEDDING_API_KEY for OpenAI
-pnpm dev
+pnpm --filter @second-memory/user-service dev
+pnpm --filter @second-memory/memory-service dev
+pnpm --filter @second-memory/ask-service dev
 
-# 3. Ask service
-cd services/ask-service
-cp .env.example .env   # if needed
-pnpm dev
-
-# 4. Web and/or mobile (from repo root)
 pnpm --filter @second-memory/web dev
 pnpm --filter @second-memory/mobile dev
 ```

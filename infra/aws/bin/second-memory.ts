@@ -52,7 +52,7 @@ if (new Set([databaseUrlParameterName, embeddingApiKeyParameterName, chatKeyPara
 
 const app = new App();
 
-new UserServiceStack(app, 'SecondMemoryUserService', {
+const user = new UserServiceStack(app, 'SecondMemoryUserService', {
   env,
   artifactPath: resolve(process.env.USER_ARTIFACT_PATH?.trim() || 'dist/assets/user-service.zip'),
   databaseUrlParameterName,
@@ -87,6 +87,12 @@ const ask = new AskServiceStack(app, 'SecondMemoryAskService', {
   memoryEndpointArn: memory.exportValue(memory.internalEndpointArn, {
     name: `${memory.stackName}:InternalMemoryServiceEndpointArn`,
   }),
+  userServiceUrl: user.exportValue(user.internalUrl, {
+    name: `${user.stackName}:UserServiceUrl`,
+  }),
+  userServiceEndpointArn: user.exportValue(user.internalEndpointArn, {
+    name: `${user.stackName}:UserServiceEndpointArn`,
+  }),
   chatBaseUrl,
   chatModel,
   chatKeyParameterName,
@@ -94,3 +100,4 @@ const ask = new AskServiceStack(app, 'SecondMemoryAskService', {
   alarmTopicArn,
 });
 ask.addStackDependency(memory);
+ask.addStackDependency(user);

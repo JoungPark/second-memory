@@ -451,9 +451,6 @@ importers:
       '@second-memory/nest-auth':
         specifier: workspace:*
         version: link:../../packages/nest-auth
-      '@second-memory/server-db':
-        specifier: workspace:*
-        version: link:../../packages/server-db
       '@second-memory/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types

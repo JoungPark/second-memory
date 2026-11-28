@@ -11,7 +11,7 @@ export class IdentityClientService {
     config: ConfigService,
     private readonly internalApi: InternalApiClient,
   ) {
-    this.baseUrl = config.get<string>('memoryServiceUrl', 'http://localhost:3001').replace(/\/$/, '');
+    this.baseUrl = config.getOrThrow<string>('userServiceUrl').replace(/\/$/, '');
   }
 
   async resolveIdentity(request: ResolveIdentityRequest): Promise<ResolveIdentityResponse> {
@@ -21,7 +21,7 @@ export class IdentityClientService {
       if (error instanceof InternalApiResponseError && error.status === 401) {
         throw new UnauthorizedException('Invalid or expired Firebase ID token');
       }
-      throw new ServiceUnavailableException('Memory service unavailable');
+      throw new ServiceUnavailableException('User service unavailable');
     }
   }
 }

@@ -1,6 +1,6 @@
 # AWS deployment and operations
 
-One CDK app deploys three stacks. `SecondMemoryMemoryService` runs the public Memory API and the IAM-protected internal API as separate Lambda Web Functions. `SecondMemoryAskService` runs public Ask, stores sessions in an on-demand DynamoDB table, and calls internal Memory for identity, search, and summary writes. Each endpoint has CloudWatch alarms for HTTP 5xx responses and throttling. For client cutover and retirement, see the [AWS migration plan](../../docs/architecture/aws-migration-plan.md).
+One CDK app deploys three stacks. `SecondMemoryMemoryService` runs the public Memory API and the IAM-protected internal API as separate Lambda Web Functions. `SecondMemoryUserService` resolves identities through an IAM-protected endpoint. `SecondMemoryAskService` runs public Ask, stores sessions in an on-demand DynamoDB table, and calls User Service for identity and internal Memory for search and summary writes. Each endpoint has CloudWatch alarms for HTTP 5xx responses and throttling. For client cutover and retirement, see the [AWS migration plan](../../docs/architecture/aws-migration-plan.md).
 
 ## Workspace setup
 
@@ -8,7 +8,7 @@ Use Node.js, the pnpm version pinned in the root `package.json`, Docker Buildx w
 
 Copy `infra/aws/.env.example` to `infra/aws/.env` for a new workspace. Set the AWS account, Region, and exact HTTPS origins for browser clients. Set `ALARM_TOPIC_ARN` to an existing SNS topic if you want alarm notifications. [Example configuration](.env.example)
 
-CDK synthesizes all stacks even when you select one. Configure both services and make both ZIPs available before running a diff or deploy. For subsequent updates, rebuild the ZIPs affected by your changes.
+CDK synthesizes all stacks even when you select one. Configure all three services and make their ZIPs available before running a diff or deploy. For subsequent updates, rebuild the ZIPs affected by your changes.
 
 Both providers require an HTTPS base URL without credentials, a query, or a fragment, and a nonempty model name. Before starting the functions, create three separate, nonempty SSM Parameter Store `SecureString` values in the target account and Region. The settings in `infra/aws/.env` identify existing parameters.
 
@@ -36,9 +36,9 @@ pnpm --filter @second-memory/aws cdk bootstrap "aws://<account-id>/<region>"
 
 For AWS deployment on pushes to `main`, see the [GitHub Actions deployment guide](github-actions-deployment.md).
 
-## Deploy both services
+## Deploy all services
 
-If PostgreSQL uses a private CA, place the certificate at `infra/aws/database-ca.pem` before building Memory. From the repository root, build both Linux Arm64 ZIPs into `infra/aws/dist/assets` and compile the CDK app. The TypeScript build and ZIP builds are independent. Recompile the CDK app after stack changes because the CLI runs `dist/bin/second-memory.js`.
+If PostgreSQL uses a private CA, place the certificate at `infra/aws/database-ca.pem` before building Memory and User Service. From the repository root, build the Linux Arm64 ZIPs into `infra/aws/dist/assets` and compile the CDK app. The TypeScript build and ZIP builds are independent. Recompile the CDK app after stack changes because the CLI runs `dist/bin/second-memory.js`.
 
 ```powershell
 pnpm --filter @second-memory/aws build:zips
@@ -47,7 +47,7 @@ pnpm --filter @second-memory/aws cdk diff --method=template
 pnpm --filter @second-memory/aws cdk deploy --all
 ```
 
-The diff compares the synthesized and deployed templates for all stacks. Use `--all` on deploy to select both. CDK deploys Memory first because Ask imports the internal endpoint URL for requests and its ARN for the execution role's invoke permission.
+The diff compares the synthesized and deployed templates for all stacks. Use `--all` on deploy to select all three. CDK deploys Memory and User Service before Ask so their endpoint URLs and ARNs are available for Ask's runtime configuration and execution role.
 
 ## Memory service
 
@@ -93,11 +93,11 @@ Use two dedicated Firebase test accounts. Capture a uniquely identifiable note t
 
 ## Ask service
 
-Set `ASK_OPENAI_BASE_URL` and `ASK_OPENAI_MODEL` to the chat provider and model. Set `ASK_SSM_PARAMETER_KMS_KEY_ARN` if the chat parameter uses a customer-managed key. Lambda Ask accesses PostgreSQL-backed data through the signed internal API. Render and local Ask keep sessions in process memory. Lambda execution environments share sessions in the DynamoDB table set by CDK through `SESSION_TABLE_NAME`.
+Set `ASK_OPENAI_BASE_URL` and `ASK_OPENAI_MODEL` to the chat provider and model. Set `ASK_SSM_PARAMETER_KMS_KEY_ARN` if the chat parameter uses a customer-managed key. Lambda Ask signs calls to User Service and internal Memory. Standalone Ask requires a reachable trusted User Service endpoint and keeps sessions in process memory. Lambda execution environments share sessions in the DynamoDB table set by CDK through `SESSION_TABLE_NAME`.
 
 ### Deploy Ask
 
-Build the ZIP and review the stack diff before deploying. CDK includes Memory when deploying Ask, so review all stacks. After Memory has published the endpoint exports, add `--exclusively` to deploy only Ask.
+Build the ZIP and review the stack diff before deploying. CDK includes Memory and User Service when deploying Ask, so review all stacks. Once both dependencies have published their endpoint exports, add `--exclusively` to deploy only Ask.
 
 ```powershell
 pnpm --filter @second-memory/aws build:zip:ask
@@ -109,6 +109,8 @@ pnpm --filter @second-memory/aws cdk deploy SecondMemoryAskService
 Record `AskServiceUrl` and `AskServiceRevision` from the stack outputs.
 
 ### Verify Ask
+
+For the User Service cutover, first verify that User Service and internal Memory resolve the same test account to identical IDs. Record a known memory and open an Ask session shortly before deployment. After deployment, use the same account to resume that session within its TTL, verify the earlier turn is available and the known memory is cited, and check that the saved summary appears in the owner's Memory listing. Before ending the session, verify a second account receives HTTP 403 when it tries to resume it. If continuity fails, restore the prior Ask revision and repeat the checks against the same endpoint and session table. [User Service verification](../../services/user-service/README.md)
 
 Send `GET /health` to `AskServiceUrl` and check for HTTP 200 with `status: "ok"`. This checks that the process is running. Confirm CORS preflight from the approved browser origins. With dedicated Firebase test accounts, verify that Ask can recall a memory, follow up from another execution environment, save a summary, close a session, expire an idle session, and prevent a second account from resuming it.
 

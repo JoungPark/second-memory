@@ -15,6 +15,9 @@ interface UserServiceStackProps extends StackProps {
 }
 
 export class UserServiceStack extends Stack {
+  readonly internalUrl: string;
+  readonly internalEndpointArn: string;
+
   constructor(scope: Construct, id: string, props: UserServiceStackProps) {
     super(scope, id, props);
     const identities = new Table(this, 'Identities', {
@@ -55,8 +58,10 @@ export class UserServiceStack extends Stack {
       Key.fromKeyArn(this, 'DatabaseKey', props.ssmParameterKmsKeyArn).grantDecrypt(service);
     }
     addEndpointAlarms(this, functionName, endpointName, props.alarmTopicArn);
-    new CfnOutput(this, 'UserServiceUrl', { value: `https://${service.endpoint.domainName}` });
-    new CfnOutput(this, 'UserServiceEndpointArn', { value: service.endpoint.endpointArn });
+    this.internalUrl = `https://${service.endpoint.domainName}`;
+    this.internalEndpointArn = service.endpoint.endpointArn;
+    new CfnOutput(this, 'UserServiceUrl', { value: this.internalUrl });
+    new CfnOutput(this, 'UserServiceEndpointArn', { value: this.internalEndpointArn });
     new CfnOutput(this, 'UserServiceRevision', { value: service.revisionId });
     new CfnOutput(this, 'IdentityTableName', { value: identities.tableName });
   }

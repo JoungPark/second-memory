@@ -2,9 +2,6 @@ export const DEFAULT_CHAT_MODEL = 'gpt-6-luna';
 
 export default () => ({
   port: parseInt(process.env.PORT ?? '3002', 10),
-  firebase: {
-    projectId: process.env.FIREBASE_PROJECT_ID,
-  },
   cors: {
     origins: (process.env.CORS_ORIGINS ?? 'http://localhost:3000,http://127.0.0.1:3000')
       .split(',')
@@ -12,6 +9,9 @@ export default () => ({
       .filter(Boolean),
   },
   memoryServiceUrl: process.env.MEMORY_SERVICE_URL ?? 'http://localhost:3001',
+  userServiceUrl:
+    process.env.USER_SERVICE_URL?.trim() ||
+    (process.env.AWS_LAMBDA_HTTP_ENDPOINT === undefined ? 'http://127.0.0.1:3003' : undefined),
   awsRegion: process.env.AWS_REGION,
   lambdaWeb: process.env.AWS_LAMBDA_HTTP_ENDPOINT !== undefined,
   llm: {

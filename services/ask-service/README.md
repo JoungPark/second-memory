@@ -4,30 +4,28 @@ NestJS RAG/chat orchestration service for Second Memory (Milestone B).
 
 ## Responsibilities
 
-- Authenticate users via Firebase ID tokens
+- Resolve Firebase ID tokens through User Service
 - Maintain ask sessions with a sliding TTL
 - Retrieve memories from Memory Service for grounding
 - Call an OpenAI-compatible LLM to compose answers with citations
 
 ## Prerequisites
 
-- PostgreSQL (same database as memory-service for user lookup)
+- User Service running on loopback port `3003` with Firebase and PostgreSQL configured
 - Memory Service running on port `3001`
-- Firebase project configured
 - OpenAI-compatible LLM endpoint (OpenAI, Groq, Ollama, etc.)
 
 ## Environment
 
 Copy `.env.example` to `.env` and adjust values as needed.
 
-Both `memory-service` and `ask-service` share `DATABASE_URL` via `@second-memory/server-db` (Firebase uid mapping lives in the shared `users` table).
+Set `USER_SERVICE_URL` to the trusted User Service endpoint. Standalone Ask defaults to `http://127.0.0.1:3003`. Lambda receives its URL from CDK and signs requests with its AWS execution role.
 
 ## Run locally
 
 ```bash
 # from repo root
 pnpm install
-pnpm --filter @second-memory/server-db db:generate
 pnpm --filter @second-memory/ask-service dev
 ```
 

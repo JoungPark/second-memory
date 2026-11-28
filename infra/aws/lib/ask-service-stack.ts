@@ -10,6 +10,8 @@ export interface AskServiceStackProps extends StackProps {
   readonly artifactPath: string;
   readonly memoryUrl: string;
   readonly memoryEndpointArn: string;
+  readonly userServiceUrl: string;
+  readonly userServiceEndpointArn: string;
   readonly corsOrigins: readonly string[];
   readonly chatBaseUrl: string;
   readonly chatModel: string;
@@ -41,6 +43,7 @@ export class AskServiceStack extends Stack {
       defaultEndpoint: { endpointName, maxEnvironments: 5 },
       environment: {
         MEMORY_SERVICE_URL: props.memoryUrl,
+        USER_SERVICE_URL: props.userServiceUrl,
         CORS_ORIGINS: props.corsOrigins.join(','),
         OPENAI_BASE_URL: props.chatBaseUrl,
         OPENAI_MODEL: props.chatModel,
@@ -53,12 +56,11 @@ export class AskServiceStack extends Stack {
       actions: ['dynamodb:PutItem', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem'],
       resourceArns: [sessions.tableArn],
     }).applyBefore(ask.resourceRevision);
-    ask.addToRolePolicy(
-      new PolicyStatement({
-        actions: ['lambda:InvokeWebFunctionEndpoint'],
-        resources: [props.memoryEndpointArn],
-      }),
-    );
+    Grant.addToPrincipal({
+      grantee: ask,
+      actions: ['lambda:InvokeWebFunctionEndpoint'],
+      resourceArns: [props.memoryEndpointArn, props.userServiceEndpointArn],
+    }).applyBefore(ask.resourceRevision);
     ask.addToRolePolicy(
       new PolicyStatement({
         actions: ['ssm:GetParameter'],
